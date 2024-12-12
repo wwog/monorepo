@@ -18,7 +18,7 @@ This Turborepo includes the following packages/apps:
 
 - `docs`: a [Next.js](https://nextjs.org/) app
 - `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
+- `@repo/ui-tools`: a stub React component library shared by both `web` and `docs` applications
 - `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
 - `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
 
@@ -79,3 +79,28 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
 - [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
 - [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+
+```dash
+>>> Creating a new Turborepo with:
+
+Application packages
+ - apps/docs
+ - apps/web
+Library packages
+ - packages/eslint-config
+ - packages/typescript-config
+ - packages/ui
+
+>>> Success! Created your Turborepo at monorepo
+
+To get started:
+- Change to the directory: cd monorepo
+- Enable Remote Caching (recommended): pnpm dlx turbo login
+   - Learn more: https://turbo.build/repo/remote-cache
+
+- Run commands with Turborepo:
+   - pnpm run build: Build all apps and packages
+   - pnpm run dev: Develop all apps and packages
+   - pnpm run lint: Lint all apps and packages
+- Run a command twice to hit cache
+```

@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
   "scripts": {
@@ -11,7 +11,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/ui": "workspace:*",
+    "@repo/ui-tools": "workspace:*",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -21,7 +21,6 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20",
     "@types/react": "18.3.1",
-    "@types/react-dom": "18.3.0",
-    "typescript": "5.5.4"
+    "@types/react-dom": "18.3.0"
   }
 }

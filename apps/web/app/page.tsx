@@ -1,5 +1,5 @@
 import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
+import { Button } from "@repo/ui-tools/button";
 import styles from "./page.module.css";
 
 type Props = Omit<ImageProps, "src"> & {
@@ -52,7 +52,7 @@ export default function Home() {
               width={20}
               height={20}
             />
-            Deploy now
+            Deploy to Vercel
           </a>
           <a
             href="https://turbo.build/repo/docs?utm_source"
