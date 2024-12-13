@@ -1,2 +1,2 @@
-export * from "./stackTrace.js";
-export * from "./random.js";
+export * from './stackTrace.js'
+export * from './random.js'

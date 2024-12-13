@@ -4,11 +4,11 @@
  */
 export function getRandomIntInclusive(min: number, max: number): number {
   if (min >= max) {
-    throw new Error("min must be less than or equal to max");
+    throw new Error('min must be less than or equal to max')
   }
-  const minCeil = Math.ceil(min);
-  const maxFloor = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloor - minCeil + 1)) + minCeil;
+  const minCeil = Math.ceil(min)
+  const maxFloor = Math.floor(max)
+  return Math.floor(Math.random() * (maxFloor - minCeil + 1)) + minCeil
 }
 
 /**
@@ -17,9 +17,9 @@ export function getRandomIntInclusive(min: number, max: number): number {
  */
 export function getRandomIntExclusive(min: number, max: number): number {
   if (min >= max) {
-    throw new Error("min must be less than or equal to max");
+    throw new Error('min must be less than or equal to max')
   }
-  return getRandomIntInclusive(min + 1, max - 1);
+  return getRandomIntInclusive(min + 1, max - 1)
 }
 
 /**
@@ -28,9 +28,9 @@ export function getRandomIntExclusive(min: number, max: number): number {
  */
 export function getRandomIntExcludeMax(min: number, max: number): number {
   if (min >= max) {
-    throw new Error("min must be less than or equal to max");
+    throw new Error('min must be less than or equal to max')
   }
-  return getRandomIntInclusive(min, max - 1);
+  return getRandomIntInclusive(min, max - 1)
 }
 
 /**
@@ -41,14 +41,14 @@ export function getRandomIntExcludeMax(min: number, max: number): number {
  */
 export function getRandomString(
   length = 8,
-  chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
 ): string {
   if (length <= 0) {
-    throw new Error("length must be greater than 0");
+    throw new Error('length must be greater than 0')
   }
-  let result = "";
+  let result = ''
   for (let i = 0; i < length; i++) {
-    result += chars[getRandomIntExcludeMax(0, chars.length)];
+    result += chars[getRandomIntExcludeMax(0, chars.length)]
   }
-  return result;
+  return result
 }
