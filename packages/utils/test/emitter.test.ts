@@ -69,4 +69,29 @@ describe('Emitter', () => {
     emitter.fire('test')
     expect(errorListener).toHaveBeenCalled()
   })
+
+  it('should debounce events', () => {
+    const emitter = new Emitter<string>()
+    const debouncedEvent = Event.debounce(
+      emitter.event,
+      (last, event) => event,
+      100,
+    )
+    const listener = vitest.fn()
+    debouncedEvent(listener)
+
+    emitter.fire('test1')
+    emitter.fire('test2')
+    emitter.fire('test3')
+
+    expect(listener).not.toHaveBeenCalled()
+
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        expect(listener).toHaveBeenCalledTimes(1)
+        expect(listener).toHaveBeenCalledWith('test3')
+        resolve()
+      }, 150)
+    })
+  })
 })
