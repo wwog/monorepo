@@ -1,8 +1,45 @@
-import type { StackTrace } from '../stackTrace.js'
-import { Event } from './event.js'
+import { Disposable, toDisposable, type IDisposable } from './lifecycle.js'
+import { StackTrace } from './stackTrace.js'
 
 export interface EventDeliveryQueue {
   _isEventDeliveryQueue: true
+}
+
+/**
+ * @description_zh 一个可以订阅的事件，可以有零个或一个参数。事件本身是一个函数。
+ * @description_en An event with zero or one parameters that can be subscribed to. The event is a function itself.
+ */
+export interface Event<T> {
+  (listener: (e: T) => unknown, thisArgs?: any): IDisposable
+}
+
+export namespace Event {
+  /**
+   * @description 给定一个事件，返回另一个只触发一次的事件。
+   * @description_en Given an event, returns another event which only fires once.
+   */
+  export function once<T>(event: Event<T>): Event<T> {
+    return (listener, thisArgs) => {
+      let didFire = false
+      let result: IDisposable | undefined = undefined
+      result = event((e) => {
+        if (didFire) {
+          return
+        } else if (result) {
+          result.dispose()
+        } else {
+          didFire = true
+        }
+        return listener.call(thisArgs, e)
+      }, null)
+
+      if (didFire) {
+        result.dispose()
+      }
+
+      return result
+    }
+  }
 }
 
 /**
@@ -70,6 +107,22 @@ type ListenerOrListeners<T> =
   | (ListenerContainer<T> | undefined)[]
   | ListenerContainer<T>
 
+const forEachListener = <T>(
+  listeners: ListenerOrListeners<T>,
+  fn: (c: ListenerContainer<T>) => void,
+) => {
+  if (listeners instanceof UniqueContainer) {
+    fn(listeners)
+  } else {
+    for (let i = 0; i < listeners.length; i++) {
+      const l = listeners[i]
+      if (l) {
+        fn(l)
+      }
+    }
+  }
+}
+
 export interface EmitterOptions {
   /**
    * @description 可选函数，用于在添加第一个监听器之前调用
@@ -102,18 +155,32 @@ export interface EmitterOptions {
    * {@link onUnexpectedError}
    */
   onListenerError?: (e: any) => void
+  /**
+   * @description 传递一个交付队列，这对于确保跨多个发射器的有序事件交付很有用。
+   * @description_en Pass in a delivery queue, which is useful for ensuring. in order event delivery across multiple emitters.
+   */
+  deliveryQueue?: EventDeliveryQueue
 }
 
 export class Emitter<T = void> {
+  static EnableInjectStackTrace = false
+  static setEnableInjectStackTrace(value: boolean) {
+    Emitter.EnableInjectStackTrace = value
+  }
   private readonly _options?: EmitterOptions
   private _event?: Event<T>
-  protected _listeners?: ListenerOrListeners<T>
-  protected _deliveryQueue?: EventDeliveryQueuePrivate
+  private _deliveryQueue?: EventDeliveryQueuePrivate
+  private _disposed?: true
 
+  protected _listeners?: ListenerOrListeners<T>
+  // listeners可能会包含undefined，因此我们需要一个计数器来跟踪实际的大小
   protected _size = 0
 
   constructor(options?: EmitterOptions) {
     this._options = options
+    this._deliveryQueue = options?.deliveryQueue as
+      | EventDeliveryQueuePrivate
+      | undefined
   }
 
   /**
@@ -122,18 +189,26 @@ export class Emitter<T = void> {
    */
   get event(): Event<T> {
     this._event ??= (callback, thisArgs) => {
+      if (this._disposed) {
+        return Disposable.None
+      }
+
       if (thisArgs) {
         callback = callback.bind(thisArgs)
       }
 
       const contained = new UniqueContainer(callback)
 
+      if (Emitter.EnableInjectStackTrace) {
+        contained.stack = StackTrace.create()
+      }
+
       if (this._listeners === undefined) {
         this._options?.onWillAddFirstListener?.(this)
         this._listeners = contained
         this._options?.onDidAddFirstListener?.(this)
       } else if (this._listeners instanceof UniqueContainer) {
-        //TODO: delivery Queue
+        this._deliveryQueue ??= new EventDeliveryQueuePrivate()
         this._listeners = [this._listeners, contained]
       } else {
         this._listeners.push(contained)
@@ -141,6 +216,12 @@ export class Emitter<T = void> {
 
       this._options?.onDidAddListener?.(this)
       this._size++
+
+      const result = toDisposable(() => {
+        this._removeListener(contained)
+      })
+
+      return result
     }
 
     return this._event
@@ -172,6 +253,9 @@ export class Emitter<T = void> {
     listeners[idx] = undefined
   }
 
+  /**
+   * @description 交付数据到监听器
+   */
   private _deliver(
     listener: undefined | UniqueContainer<(data: T) => void>,
     data: T,
@@ -192,15 +276,37 @@ export class Emitter<T = void> {
   }
 
   /**
+   * @description 交付给队列
+   */
+  private _deliverQueue(dq: EventDeliveryQueuePrivate): void {
+    const listeners = dq.current!._listeners as (
+      | ListenerContainer<T>
+      | undefined
+    )[]
+    while (dq.i < dq.end) {
+      // important: dq.i is incremented before calling deliver() because it might reenter deliverQueue()
+      this._deliver(listeners[dq.i++], dq.value as T)
+    }
+    dq.reset()
+  }
+
+  /**
    * @description 触发事件，传递给监听器
    * @description_en Fires an event, passing the given data to the listeners.
    */
   public fire(data: T): void {
+    if (this._deliveryQueue?.current) {
+      this._deliverQueue(this._deliveryQueue)
+    }
+
     if (this._listeners === undefined) {
       return
     } else if (this._listeners instanceof UniqueContainer) {
       this._deliver(this._listeners, data)
     } else {
+      const dq = this._deliveryQueue!
+      dq.enqueue(this, data, this._listeners.length)
+      this._deliverQueue(dq)
     }
   }
 
@@ -208,7 +314,28 @@ export class Emitter<T = void> {
    * @description 调用后销毁发射器
    * @description_en Destroys the emitter, releasing all resources
    */
-  public dispose(): void {}
+  public dispose(): void {
+    if (!this._disposed) {
+      this._disposed = true
+
+      if (this._deliveryQueue?.current === this) {
+        this._deliveryQueue.reset()
+      }
+
+      if (this._listeners) {
+        if (Emitter.EnableInjectStackTrace) {
+          const listeners = this._listeners
+          queueMicrotask(() => {
+            forEachListener(listeners, (l) => l.stack?.print())
+          })
+        }
+        this._listeners = undefined
+        this._size = 0
+      }
+
+      this._options?.onDidRemoveLastListener?.(this)
+    }
+  }
 
   /**
    * @description 返回是否有监听器

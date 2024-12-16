@@ -13,3 +13,36 @@ export const composeFn = <T>(...fns: Array<(arg: T) => T>) => {
 export const composeFnRight = <T>(...fns: Array<(arg: T) => T>) => {
   return (arg: T) => fns.reduceRight((acc, fn) => fn(acc), arg)
 }
+
+/**
+ * @description 生成一个只调用一次的函数, 该函数只会调用一次
+ * @description_en Given a function, returns a function that is only calling that function once.
+ */
+export function createSingleCallFunction<T extends Function>(
+  this: unknown,
+  fn: T,
+  fnDidRunCallback?: () => void,
+): T {
+  const _this = this
+  let didCall = false
+  let result: unknown
+
+  return function () {
+    if (didCall) {
+      return result
+    }
+
+    didCall = true
+    if (fnDidRunCallback) {
+      try {
+        result = fn.apply(_this, arguments)
+      } finally {
+        fnDidRunCallback()
+      }
+    } else {
+      result = fn.apply(_this, arguments)
+    }
+
+    return result
+  } as unknown as T
+}
