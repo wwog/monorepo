@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 /**
  * @description 组合函数, 从左到右执行
  * @description_en Compose function, execute from left to right
@@ -23,6 +24,7 @@ export function createSingleCallFunction<T extends Function>(
   fn: T,
   fnDidRunCallback?: () => void,
 ): T {
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
   const _this = this
   let didCall = false
   let result: unknown
@@ -35,11 +37,13 @@ export function createSingleCallFunction<T extends Function>(
     didCall = true
     if (fnDidRunCallback) {
       try {
+        // eslint-disable-next-line prefer-rest-params
         result = fn.apply(_this, arguments)
       } finally {
         fnDidRunCallback()
       }
     } else {
+      // eslint-disable-next-line prefer-rest-params
       result = fn.apply(_this, arguments)
     }
 

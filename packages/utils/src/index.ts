@@ -1,5 +1,5 @@
 export * from './stackTrace.js'
 export * from './random.js'
-export * from './emitter.js'
 export * from './lifecycle.js'
 export * from './functional.js'
+export * from './event/index.js'
