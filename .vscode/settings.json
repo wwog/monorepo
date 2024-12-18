@@ -5,9 +5,11 @@
     }
   ],
   "cSpell.words": [
+    "rslib",
     "serviceworker",
     "tseslint",
     "turbopack",
-    "Turborepo"
+    "Turborepo",
+    "wwog"
   ]
 }
