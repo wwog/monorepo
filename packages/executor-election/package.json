@@ -5,6 +5,9 @@
   "files": [
     "./src"
   ],
+  "scripts": {
+    "start": "node src/lib.ts"
+  },
   "dependencies": {
     "@wwog/good-design": "workspace:*"
   },

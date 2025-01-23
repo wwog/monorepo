@@ -8,18 +8,27 @@
     "match"
   ],
   "type": "module",
-  "main": "src/lib.ts",
+  "main": "dist/lib.js",
   "files": [
-    "./src"
+    "./src",
+    "./dist"
   ],
   "license": "MIT",
   "exports": {
-    ".": "./src/lib.ts",
-    "./rust/*": "./src/rust/*",
-    "./rust": "./src/rust/mod.ts"
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js"
+    },
+    "./Rust": {
+      "import": "./dist/rust.js",
+      "types": "./dist/rust/mod.d.ts"
+    }
   },
   "sideEffects": false,
   "scripts": {
+    "build": "rslib build",
+    "format": "prettier --write .",
+    "lint": "eslint .",
     "test": "vitest run"
   },
   "devDependencies": {
