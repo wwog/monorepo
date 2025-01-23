@@ -1,6 +1,9 @@
 {
   "name": "@wwog/good-design",
   "description": "Dedicated to citing good design in other languages",
+  "bugs": "https://github.com/wwog/monorepo/issues",
+  "homepage": "https://github.com/wwog",
+  "version": "0.0.1",
   "keywords": [
     "Rust",
     "Option",
@@ -11,7 +14,8 @@
   "main": "dist/lib.js",
   "files": [
     "./src",
-    "./dist"
+    "./dist",
+    "LICENSE.md"
   ],
   "license": "MIT",
   "exports": {
