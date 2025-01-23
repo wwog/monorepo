@@ -1,0 +1,11 @@
+{
+  "name": "@wwog/executor-election",
+  "type": "module",
+  "main": "src/lib.ts",
+  "files": [
+    "./src"
+  ],
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*"
+  }
+}

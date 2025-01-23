@@ -1,0 +1,14 @@
+{
+  "name": "@wwog/good-design",
+  "type": "module",
+  "main": "src/lib.ts",
+  "files": [
+    "./src"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*"
+  }
+}
