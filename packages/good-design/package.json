@@ -23,7 +23,7 @@
       "types": "./dist/lib.d.ts",
       "import": "./dist/lib.js"
     },
-    "./Rust": {
+    "./rust": {
       "import": "./dist/rust.js",
       "types": "./dist/rust/mod.d.ts"
     }

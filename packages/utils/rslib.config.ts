@@ -6,6 +6,24 @@ export default defineConfig({
       format: 'esm',
       syntax: 'esnext',
       dts: true,
+      source: {
+        entry: {
+          browser: './src/browser/index.ts',
+        },
+      },
+      output: {
+        target: 'web',
+      },
+    },
+    {
+      format: 'esm',
+      syntax: 'esnext',
+      dts: true,
+      source: {
+        entry: {
+          index: './src/all/index.ts',
+        },
+      },
       output: {
         target: 'web',
       },

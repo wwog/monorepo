@@ -1,4 +1,4 @@
-import { safeIsSecureContext } from './browser/misc.js'
+import { safeIsSecureContext } from '../browser/misc.js'
 
 /**
  * @description 获取指定范围内的随机整数, 包括最小值和最大值
