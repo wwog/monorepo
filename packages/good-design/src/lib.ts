@@ -1,1 +1,1 @@
-export * as Rust from './rust/mod'
+export * as rust from './rust/mod'
