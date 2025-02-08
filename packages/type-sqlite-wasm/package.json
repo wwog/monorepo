@@ -1,0 +1,28 @@
+{
+  "name": "type-sqlite-wasm",
+  "version": "1.0.0",
+  "description": "Easy and simple use of sqlite-wasm",
+  "main": "index.js",
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/lib.ts"
+  },
+  "keywords": [
+    "sqlite",
+    "wasm",
+    "sqlite-wasm",
+    "orm",
+    "sqlite3",
+    "database",
+    "typescript"
+  ],
+  "author": "wwog",
+  "license": "MIT",
+  "dependencies": {
+    "@wwog/good-design": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:^"
+  }
+}

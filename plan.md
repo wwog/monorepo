@@ -125,6 +125,8 @@ export class QueryBuilder<T> {
   private orderByClauses: OrderByClause[] = [];
   private limitValue?: number;
   private offsetValue?: number;
+  private groupByFields: string[] = [];
+  private havingClauses: WhereConditions[] = [];
 
   constructor(private table: string) {}
 
@@ -133,8 +135,23 @@ export class QueryBuilder<T> {
     return this;
   }
 
+  orWhere(conditions: WhereConditions): this {
+    this.whereClauses.push({ type: 'OR', conditions });
+    return this;
+  }
+
   orderBy(field: string, direction: 'ASC' | 'DESC' = 'ASC'): this {
     this.orderByClauses.push({ field, direction });
+    return this;
+  }
+
+  groupBy(fields: string[]): this {
+    this.groupByFields = fields;
+    return this;
+  }
+
+  having(conditions: WhereConditions): this {
+    this.havingClauses.push(conditions);
     return this;
   }
 
@@ -157,6 +174,33 @@ export class QueryBuilder<T> {
     return this.execute<U>();
   }
 
+  async sum(field: string): Promise<number> {
+    let sql = `SELECT SUM(${field}) as total FROM ${this.table}`;
+    const params: any[] = [];
+
+    // 构建 WHERE 子句
+    if (this.whereClauses.length > 0) {
+      sql += ' WHERE ' + this.whereClauses
+        .map(clause => buildConditions(clause.conditions))
+        .join(' AND ');
+    }
+
+    // 构建 GROUP BY 子句
+    if (this.groupByFields.length > 0) {
+      sql += ' GROUP BY ' + this.groupByFields.join(', ');
+    }
+
+    // 构建 HAVING 子句
+    if (this.havingClauses.length > 0) {
+      sql += ' HAVING ' + this.havingClauses
+        .map(c => buildConditions(c))
+        .join(' AND ');
+    }
+
+    const row = await db.get(sql, params);
+    return row?.total ?? 0;
+  }
+
   private async execute<U>(): Promise<U[]> {
     let sql = `SELECT * FROM ${this.table}`;
     const params: any[] = [];
@@ -173,6 +217,18 @@ export class QueryBuilder<T> {
       sql += ' ORDER BY ' + this.orderByClauses
         .map(clause => `${clause.field} ${clause.direction}`)
         .join(', ');
+    }
+
+    // 构建 GROUP BY 子句
+    if (this.groupByFields.length > 0) {
+      sql += ' GROUP BY ' + this.groupByFields.join(', ');
+    }
+
+    // 构建 HAVING 子句
+    if (this.havingClauses.length > 0) {
+      sql += ' HAVING ' + this.havingClauses
+        .map(c => buildConditions(c))
+        .join(' AND ');
     }
 
     // 构建 LIMIT/OFFSET
