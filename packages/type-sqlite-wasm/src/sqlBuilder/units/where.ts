@@ -3,6 +3,7 @@ import type {
   Raw,
   WhereClause,
   WhereCondition,
+  WhereConditionDescription,
   WhereType,
 } from '../../types/query.type'
 import { isWhereConditionDescription, quotes } from '../../utils'
@@ -37,15 +38,35 @@ type PreprocessResult = {
  * Optimize the structure during the setting process
  */
 const optimizeSet = (
-  target: any,
-  source: any,
-  key: Keyof<BasePartItem>,
+  target: PartItem,
+  source: WhereConditionDescription,
   type: WhereType,
+  column: string,
+  key: Keyof<BasePartItem>,
 ) => {
   if (source[key] === undefined) {
     return
   }
   const targetKey = `${key}_${type}` as Keyof<PartItem>
+  const getTargetValue = (type: WhereType, key: Keyof<BasePartItem>) => {
+    if (type === 'AND') {
+      return target[`${key}_and`] ?? []
+    }
+    return target[`${key}_or`] ?? []
+  }
+  if (target[targetKey] === undefined) {
+    target[targetKey] = []
+  }
+  const targetArray = target[targetKey]!
+
+  if (type === 'AND') {
+    if (key === '$eq') {
+      //当加入 AND 类型的 $eq 条件时，其他有相等性质的条件都应该导致错误
+      if (getTargetValue('AND', '$eq').length > 0) {
+        throw new Error()
+      }
+    }
+  }
 }
 
 /**
@@ -78,21 +99,21 @@ const preprocess = (whereClauses: WhereClause[]): PreprocessResult => {
       const sourceCondition = condition[column]
 
       if (isWhereConditionDescription(sourceCondition)) {
-        optimizeSet(parts, sourceCondition, '$eq', type)
-        optimizeSet(parts, sourceCondition, '$neq', type)
-        optimizeSet(parts, sourceCondition, '$gt', type)
-        optimizeSet(parts, sourceCondition, '$gte', type)
-        optimizeSet(parts, sourceCondition, '$lt', type)
-        optimizeSet(parts, sourceCondition, '$lte', type)
-        optimizeSet(parts, sourceCondition, '$like', type)
-        optimizeSet(parts, sourceCondition, '$in', type)
-        optimizeSet(parts, sourceCondition, '$nin', type)
-        optimizeSet(parts, sourceCondition, '$null', type)
-        optimizeSet(parts, sourceCondition, '$between', type)
-        optimizeSet(parts, sourceCondition, '$notBetween', type)
+        optimizeSet(partItem, sourceCondition, type, column, '$eq')
+        optimizeSet(partItem, sourceCondition, type, column, '$neq')
+        optimizeSet(partItem, sourceCondition, type, column, '$gt')
+        optimizeSet(partItem, sourceCondition, type, column, '$gte')
+        optimizeSet(partItem, sourceCondition, type, column, '$lt')
+        optimizeSet(partItem, sourceCondition, type, column, '$lte')
+        optimizeSet(partItem, sourceCondition, type, column, '$like')
+        optimizeSet(partItem, sourceCondition, type, column, '$in')
+        optimizeSet(partItem, sourceCondition, type, column, '$nin')
+        optimizeSet(partItem, sourceCondition, type, column, '$null')
+        optimizeSet(partItem, sourceCondition, type, column, '$between')
+        optimizeSet(partItem, sourceCondition, type, column, '$notBetween')
       } else {
         //if the condition is not an object, it is considered to be an equal condition
-        optimizeSet(parts, { $eq: sourceCondition }, '$eq', type)
+        optimizeSet(partItem, { $eq: sourceCondition }, type, column, '$eq')
       }
     })
   })
