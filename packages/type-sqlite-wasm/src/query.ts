@@ -11,7 +11,7 @@ import type {
   SelectClause,
   SQLBuilder,
   WhereClause,
-  WhereConditions,
+  WhereCondition,
 } from './types/query.type'
 import { Sqlite3SQLBuilder } from './sqlBuilder/sqlite3'
 
@@ -66,16 +66,16 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.fromClauses.push({ rule: table })
     return this
   }
-  fromRaw(sql: string, bindings: string[] | Record<string, any>): this {
+  fromRaw(sql: string, bindings?: string[] | Record<string, any>): this {
     this.description.fromClauses.push({ raw: { sql, bindings } })
     return this
   }
-  where(conditions: WhereConditions<T>): this {
-    this.description.whereClauses.push({ rule: { type: 'AND', conditions } })
+  where(condition: WhereCondition<T>): this {
+    this.description.whereClauses.push({ rule: { type: 'AND', condition: condition } })
     return this
   }
-  orWhere(conditions: WhereConditions<T>): this {
-    this.description.whereClauses.push({ rule: { type: 'OR', conditions } })
+  orWhere(condition: WhereCondition<T>): this {
+    this.description.whereClauses.push({ rule: { type: 'OR', condition: condition } })
     return this
   }
   whereRaw(sql: string, bindings?: string[] | Record<string, any>): this {

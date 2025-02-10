@@ -11,7 +11,7 @@ export function bracket(str: string): string {
 export function isWhereConditionDescription(
   condition: any,
 ): condition is WhereConditionDescription {
-  if (typeof condition !== 'object') {
+  if (typeof condition === 'object' && condition !== null) {
     return true
   }
   return false

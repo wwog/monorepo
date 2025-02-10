@@ -8,24 +8,20 @@ interface UserTable {
 
 const queryBuilder = new QueryBuilder<UserTable>()
 
-const query = queryBuilder
-  .select(['name', 'age'])
+queryBuilder
+  .select()
   .from('users')
   .where({
-    name: 'John',
-    age: {
-      $lt: 30,
+    age: 18,
+    name: {
+      $like: '%a%',
     },
   })
   .orWhere({
-    name: 'Jack',
-    age: {
-      $gt: 30,
-    },
+    age: 20,
   })
-  .orderBy('age', 'ASC')
   .limit(10)
-  .offset(0)
-  .groupBy('age')
+  .orderBy('id', 'DESC', 'FIRST')
+  .groupBy('name')
 
-console.log(query.toSQL().unwrap())
+console.log(queryBuilder.toSQL().unwrap())

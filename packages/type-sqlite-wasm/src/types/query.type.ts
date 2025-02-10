@@ -9,7 +9,9 @@ export interface QueryDescription<T> {
   offsetValue?: number
   limitValue?: number
 }
-
+/**
+ * Convert QueryBuilder description object {@link QueryDescription} to SQL string
+ */
 export type SQLBuilder = (description: QueryDescription<any>) => string
 
 export interface WhereConditionDescription{
@@ -39,7 +41,7 @@ export interface WhereConditionDescription{
   $notBetween?: [any, any]
 }
 
-export type WhereConditions<T> = {
+export type WhereCondition<T> = {
   [P in keyof T]?:
     | {
         /** equal */
@@ -91,7 +93,7 @@ export interface FromClause {
 export interface WhereClause<T = any> {
   rule?: {
     type: WhereType
-    conditions: WhereConditions<T>
+    condition: WhereCondition<T>
   }
   raw?: Raw
 }
@@ -147,8 +149,8 @@ export interface IQueryBuilderCommonMethods<T> {
    * @example
    * const query = queryBuilder.select('*').from('table').where({ column1: 'value' });
    */
-  where(conditions: WhereConditions<T>): this
-  orWhere(conditions: WhereConditions<T>): this
+  where(conditions: WhereCondition<T>): this
+  orWhere(conditions: WhereCondition<T>): this
   /**
    * Specify the conditions for the 'WHERE' clause using a raw SQL query.
    * @param sql The SQL query to execute
