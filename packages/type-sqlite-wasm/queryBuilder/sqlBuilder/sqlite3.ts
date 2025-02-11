@@ -25,7 +25,7 @@ export function Sqlite3SQLBuilder(description: QueryDescription<any>): string {
   const fromStr = fromUnit(fromClauses)
   query += `${selectStr} ${fromStr} `
   if (whereClauses.length > 0) {
-    query += whereUnit(whereClauses)
+    console.log(whereUnit(whereClauses))
   }
 
   return query

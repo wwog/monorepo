@@ -6,7 +6,8 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "start": "tsx src/lib.ts"
+    "start": "tsx queryBuilder/lib.ts",
+    "test": "vitest run"
   },
   "keywords": [
     "sqlite",

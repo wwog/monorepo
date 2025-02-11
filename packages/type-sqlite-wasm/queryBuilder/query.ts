@@ -1,4 +1,3 @@
-import { Err, Ok, type Result } from '@wwog/good-design/rust'
 import type {
   FromClause,
   GroupByClause,
@@ -11,6 +10,7 @@ import type {
   SelectClause,
   SQLBuilder,
   WhereClause,
+  Bindings,
   WhereCondition,
 } from './types/query.type'
 import { Sqlite3SQLBuilder } from './sqlBuilder/sqlite3'
@@ -66,7 +66,7 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.fromClauses.push({ rule: table })
     return this
   }
-  fromRaw(sql: string, bindings?: string[] | Record<string, any>): this {
+  fromRaw(sql: string, bindings?: Bindings): this {
     this.description.fromClauses.push({ raw: { sql, bindings } })
     return this
   }
@@ -78,8 +78,12 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.whereClauses.push({ rule: { type: 'OR', condition: condition } })
     return this
   }
-  whereRaw(sql: string, bindings?: string[] | Record<string, any>): this {
-    this.description.whereClauses.push({ raw: { sql, bindings } })
+  whereRaw(sql: string, bindings?: Bindings): this {
+    this.description.whereClauses.push({ raw: { sql, bindings, type: 'AND' } })
+    return this
+  }
+  orWhereRaw(sql: string, bindings?: Bindings): this {
+    this.description.whereClauses.push({ raw: { sql, bindings, type: 'OR' } })
     return this
   }
   offset(offset: number): this {
@@ -110,15 +114,16 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.groupByClauses.push({ raw: { sql } })
     return this
   }
-  toSQL(): Result<string, Error> {
+  toSQL(): string {
     try {
-      return Ok(this.builder(this.description))
+      this.builder(this.description)
+      return ''
     } catch (error) {
       if (error instanceof Error) {
-        return Err(new Error('Failed to generate SQL: ' + error.message))
+        throw new Error('Failed to generate SQL: ' + error.message)
       }
       console.error(error)
-      return Err(new Error('Failed to generate SQL'))
+      throw new Error('Failed to generate SQL')
     }
   }
 }

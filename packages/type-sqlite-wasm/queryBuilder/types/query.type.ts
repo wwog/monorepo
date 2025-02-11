@@ -1,5 +1,5 @@
 export type Keyof<T> = keyof T & string
-
+export type SQLWithBindings = [string, any[]]
 export interface QueryDescription<T> {
   selectClauses: SelectClause<T>[]
   fromClauses: FromClause[]
@@ -14,7 +14,7 @@ export interface QueryDescription<T> {
  */
 export type SQLBuilder = (description: QueryDescription<any>) => string
 
-export interface WhereConditionDescription{
+export interface WhereConditionDescription {
   /** equal */
   $eq?: any
   /** not equal */
@@ -43,42 +43,42 @@ export interface WhereConditionDescription{
 
 export type WhereCondition<T> = {
   [P in keyof T]?:
-    | {
-        /** equal */
-        $eq?: T[P]
-        /** not equal */
-        $neq?: T[P]
-        /** greater than */
-        $gt?: T[P]
-        /** greater than or equal to */
-        $gte?: T[P]
-        /** less than */
-        $lt?: T[P]
-        /** less than or equal to */
-        $lte?: T[P]
-        /** like */
-        $like?: T[P]
-        /** not like */
-        $in?: T[P][]
-        /** not in */
-        $nin?: T[P][]
-        /** null or not null */
-        $null?: boolean
-        /** between */
-        $between?: [T[P], T[P]]
-        /** not between */
-        $notBetween?: [T[P], T[P]]
-      }
-    | T[P]
+  | {
+    /** equal */
+    $eq?: T[P]
+    /** not equal */
+    $neq?: T[P]
+    /** greater than */
+    $gt?: T[P]
+    /** greater than or equal to */
+    $gte?: T[P]
+    /** less than */
+    $lt?: T[P]
+    /** less than or equal to */
+    $lte?: T[P]
+    /** like */
+    $like?: T[P]
+    /** not like */
+    $in?: T[P][]
+    /** not in */
+    $nin?: T[P][]
+    /** null or not null */
+    $null?: boolean
+    /** between */
+    $between?: [T[P], T[P]]
+    /** not between */
+    $notBetween?: [T[P], T[P]]
+  }
+  | T[P]
 }
 
 export type WhereType = 'AND' | 'OR'
 export type OrderByType = 'ASC' | 'DESC'
 export type OrderByNulls = 'FIRST' | 'LAST'
-
+export type Bindings = (string | number)[]
 export interface Raw {
   sql: string
-  bindings?: string[] | Record<string, any>
+  bindings?: Bindings
 }
 //#region Classes and Interfaces
 export interface SelectClause<T = any> {
@@ -90,12 +90,16 @@ export interface FromClause {
   raw?: Raw
 }
 
+export interface WhereRaw extends Raw {
+  type: WhereType
+}
+
 export interface WhereClause<T = any> {
   rule?: {
     type: WhereType
     condition: WhereCondition<T>
   }
-  raw?: Raw
+  raw?: WhereRaw
 }
 
 export interface OrderByClause<T = any> {
@@ -142,7 +146,7 @@ export interface IQueryBuilderCommonMethods<T> {
    * @example
    * const query = queryBuilder.select('*').fromRaw('SELECT * FROM table WHERE column1 = :value', { value: 'value' });
    */
-  fromRaw(sql: string, bindings: string[] | Record<string, any>): this
+  fromRaw(sql: string, bindings?: Bindings): this
   /**
    * Specify the conditions for the 'WHERE' clause.
    * @param conditions The conditions to filter the query results.
@@ -160,7 +164,7 @@ export interface IQueryBuilderCommonMethods<T> {
    * @example
    * const query = queryBuilder.select('*').from('table').whereRaw('column1 = :value', { value: 'value' });
    */
-  whereRaw(sql: string, bindings: string[] | Record<string, any>): this
+  whereRaw(sql: string, bindings?: Bindings): this
   /**
    * Specify the number of records to skip.
    * @param offset The number of records to skip before starting to return results.

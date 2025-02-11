@@ -1,4 +1,4 @@
-import { Emitter, Event } from '../src/event'
+import { Emitter, Event } from '../src/all/event'
 import { describe, it, expect, vitest } from 'vitest'
 
 describe('Emitter', () => {
