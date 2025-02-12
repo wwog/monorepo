@@ -136,32 +136,7 @@ export interface GroupByClause<T = any> {
 }
 //#endregion
 
-export interface IQueryBuilderCommonMethods<T> {
-  /**
-   * Select columns from the query.
-   * @param columns The columns to select from the table.
-   * @example
-   * const query = queryBuilder.select(['column1', 'column2']);
-   * @example
-   * const query = queryBuilder.select('*');
-   * @default '*'
-   */
-  select(columns?: (keyof T)[] | string): this
-  /**
-   * From the table.
-   * @param table The table to select from.
-   * @example
-   * const query = queryBuilder.select('*').from('table');
-   */
-  from(table: string): this
-  /**
-   * From the result of a raw SQL query.
-   * @param sql The SQL query to execute.
-   * @param bindings The binding parameters for the SQL query.
-   * @example
-   * const query = queryBuilder.select('*').fromRaw('SELECT * FROM table WHERE column1 = ?', ['value']);
-   */
-  fromRaw(sql: string, bindings?: Bindings): this
+export interface ICommonMethods<T> {
   /**
    * Specify the conditions for the 'WHERE' clause.
    * @param conditions The conditions to filter the query results.
@@ -192,20 +167,34 @@ export interface IQueryBuilderCommonMethods<T> {
    * const query = queryBuilder.select('*').from('table').whereRaw('column1 = ?', ['value']).orWhereRaw('column2 = ?', ['value']);
    */
   orWhereRaw(sql: string, bindings?: Bindings): this
+}
+
+export interface ISelectMethods<T> extends ICommonMethods<T> {
   /**
-   * Specify the number of records to skip.
-   * @param offset The number of records to skip before starting to return results.
+   * Select columns from the query.
+   * @param columns The columns to select from the table.
    * @example
-   * const query = queryBuilder.select('*').from('table').offset(10);
+   * const query = queryBuilder.select(['column1', 'column2']);
+   * @example
+   * const query = queryBuilder.select('*');
+   * @default '*'
    */
-  offset(offset: number): this
+  select(columns?: (keyof T)[] | string): this
   /**
-   * Specify the number of records to return.
-   * @param limit The number of records to return.
+   * From the table.
+   * @param table The table to select from.
    * @example
-   * const query = queryBuilder.select('*').from('table').limit(10);
+   * const query = queryBuilder.select('*').from('table');
    */
-  limit(limit: number): this
+  from(table: string): this
+  /**
+   * From the result of a raw SQL query.
+   * @param sql The SQL query to execute.
+   * @param bindings The binding parameters for the SQL query.
+   * @example
+   * const query = queryBuilder.select('*').fromRaw('SELECT * FROM table WHERE column1 = ?', ['value']);
+   */
+  fromRaw(sql: string, bindings?: Bindings): this
   /**
    * Specify the order of the results.
    * @param column The column to order by.
@@ -241,26 +230,91 @@ export interface IQueryBuilderCommonMethods<T> {
    */
   groupByRaw(sql: string, bindings?: Bindings): this
   /**
+   * Specify the number of records to skip.
+   * @param offset The number of records to skip before starting to return results.
+   * @example
+   * const query = queryBuilder.select('*').from('table').offset(10);
+   */
+  offset(offset: number): this
+  /**
+   * Specify the number of records to return.
+   * @param limit The number of records to return.
+   * @example
+   * const query = queryBuilder.select('*').from('table').limit(10);
+   */
+  limit(limit: number): this
+}
+
+export interface IUpdateMethods<T> extends ICommonMethods<T> {
+  /**
+   * Update records in the table.
+   * @param table The table to update.
+   * @param values The values to update.
+   * @example
+   * const query = queryBuilder.update('users', { name: 'John' });
+   */
+  update(table: string, values: Partial<T>): this
+  /**
+   * Update records using raw SQL.
+   * @param sql The SQL query to execute.
+   * @param bindings The binding parameters for the SQL query.
+   * @example
+   * const query = queryBuilder.updateRaw('UPDATE users SET name = ?', ['John']);
+   */
+  updateRaw(sql: string, bindings?: Bindings): this
+}
+
+export interface IUpsertMethods<T> extends ICommonMethods<T> {
+  /**
+   * Upsert records into the table.
+   * @param table The table to upsert into.
+   * @param values The values to upsert.
+   * @example
+   * const query = queryBuilder.upsert('users', { name: 'John', age: 25 });
+   */
+  upsert(table: string, values: Partial<T>): this
+  /**
+   * Upsert records using raw SQL.
+   * @param sql The SQL query to execute.
+   * @param bindings The binding parameters for the SQL query.
+   * @example
+   * const query = queryBuilder.upsertRaw('INSERT INTO users (name, age) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET age = ?', ['John', 25, 30]);
+   */
+  upsertRaw(sql: string, bindings?: Bindings): this
+}
+
+export interface IDeleteMethods<T> extends ICommonMethods<T> {
+  /**
+   * Delete records from the table.
+   * @example
+   * const query = queryBuilder.delete();
+   */
+  delete(): this
+  /**
+   * Delete records using raw SQL.
+   * @param sql The SQL query to execute.
+   * @param bindings The binding parameters for the SQL query.
+   * @example
+   * const query = queryBuilder.deleteRaw('DELETE FROM users WHERE id = ?', [1]);
+   */
+  deleteRaw(sql: string, bindings?: Bindings): this
+}
+
+export interface IInsertMethods<T> extends ICommonMethods<T> {
+  /**
    * Insert records into the table.
-   * @param table The table to insert into
-   * @param values The values to insert
+   * @param table The table to insert into.
+   * @param values The values to insert.
    * @example
    * const query = queryBuilder.insert('users', { name: 'John', age: 25 });
-   * const query = queryBuilder.insert('users', [{ name: 'John' }, { name: 'Jane' }]);
    */
   insert(table: string, values: Partial<T> | Partial<T>[]): this
   /**
    * Insert records using raw SQL.
-   * @param sql The SQL query to execute
-   * @param bindings The binding parameters for the SQL query
+   * @param sql The SQL query to execute.
+   * @param bindings The binding parameters for the SQL query.
    * @example
    * const query = queryBuilder.insertRaw('INSERT INTO users (name, age) VALUES (?, ?)', ['John', 25]);
    */
   insertRaw(sql: string, bindings?: Bindings): this
-
-  update(table: string, values: Partial<T>): this
-  updateRaw(sql: string, bindings?: Bindings): this
-
-  delete(): this
-  deleteRaw(sql: string, bindings?: Bindings): this
 }
