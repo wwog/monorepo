@@ -19,6 +19,8 @@ const query = new QueryBuilder<User>()
     id: 1,
   })
   .orderBy('id', 'DESC')
+  .limit(10)
+  .offset(8)
   .toSQL()
 
 console.log(query)
