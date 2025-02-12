@@ -128,6 +128,12 @@ export interface InsertClause<T = any> {
   }
   raw?: Raw
 }
+export interface GroupByClause<T = any> {
+  rule?: {
+    column: keyof T
+  }
+  raw?: Raw
+}
 //#endregion
 
 export interface IQueryBuilderCommonMethods<T> {

@@ -81,3 +81,7 @@ export function validateBindings(sqlWithBindings: SQLWithBindings): void {
     )
   }
 }
+
+export function isPositiveInteger(value: unknown): value is number {
+  return typeof value === 'number' && value > 0 && Number.isInteger(value)
+}
