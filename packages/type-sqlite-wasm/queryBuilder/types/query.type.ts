@@ -184,7 +184,6 @@ export interface IQueryBuilderCommonMethods<T> {
    * @param direction The direction to order by.
    * - 'ASC' for ascending order.
    * - 'DESC' for descending order.
-   * default: 'ASC'
    * @param nulls The order of null values.
    * - 'FIRST' for null values first.
    * - 'LAST' for null values last.
@@ -198,7 +197,7 @@ export interface IQueryBuilderCommonMethods<T> {
    * @example
    * const query = queryBuilder.select('*').from('table').orderByRaw('column1 ASC NULLS LAST');
    */
-  orderByRaw(sql: string): this
+  orderByRaw(sql: string, bindings?: Bindings): this
   /**
    * Specify the grouping of the results.
    * @param column The column to group by.
@@ -212,5 +211,5 @@ export interface IQueryBuilderCommonMethods<T> {
    * @example
    * const query = queryBuilder.select('*').from('table').groupByRaw('column1');
    */
-  groupByRaw(sql: string): this
+  groupByRaw(sql: string, bindings?: Bindings): this
 }

@@ -18,6 +18,7 @@ const query = new QueryBuilder<User>()
   .where({
     id: 1,
   })
+  .orderBy('id', 'DESC')
   .toSQL()
 
 console.log(query)

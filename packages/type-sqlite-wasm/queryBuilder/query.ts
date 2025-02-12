@@ -1,15 +1,10 @@
 import type {
-  FromClause,
-  GroupByClause,
   IQueryBuilderCommonMethods,
   Keyof,
-  OrderByClause,
   OrderByNulls,
   OrderByType,
   QueryDescription,
-  SelectClause,
   SQLBuilder,
-  WhereClause,
   Bindings,
   WhereCondition,
   SQLWithBindings,
@@ -107,16 +102,16 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.orderByClauses.push({ rule: { column, direction, nulls } })
     return this
   }
-  orderByRaw(sql: string): this {
-    this.description.orderByClauses.push({ raw: { sql } })
+  orderByRaw(sql: string, bindings?: Bindings): this {
+    this.description.orderByClauses.push({ raw: { sql, bindings } })
     return this
   }
   groupBy(column: keyof T): this {
     this.description.groupByClauses.push({ rule: { column } })
     return this
   }
-  groupByRaw(sql: string): this {
-    this.description.groupByClauses.push({ raw: { sql } })
+  groupByRaw(sql: string, bindings?: Bindings): this {
+    this.description.groupByClauses.push({ raw: { sql, bindings } })
     return this
   }
   toSQL(): SQLWithBindings {

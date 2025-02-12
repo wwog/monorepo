@@ -1,15 +1,12 @@
 import type {
   Bindings,
-  FromClause,
   QueryDescription,
-  SelectClause,
   SQLWithBindings,
-  WhereClause,
 } from '../types/query.type'
-import { quotes, bracket, isWhereConditionDescription } from '../utils'
 import { fromUnit } from './units/from'
 import { selectUnit } from './units/select'
 import { whereUnit } from './units/where'
+import { orderUnit } from './units/order'
 
 export function Sqlite3SQLBuilder(
   description: QueryDescription<any>,
@@ -28,6 +25,7 @@ export function Sqlite3SQLBuilder(
   const bindings: Bindings = []
 
   const pushUnitResult = (unit: SQLWithBindings) => {
+    if (unit[0] === '') return
     sql.push(unit[0])
     bindings.push(...unit[1])
   }
@@ -35,6 +33,7 @@ export function Sqlite3SQLBuilder(
   pushUnitResult(selectUnit(selectClauses))
   pushUnitResult(fromUnit(fromClauses))
   pushUnitResult(whereUnit(whereClauses))
+  pushUnitResult(orderUnit(orderByClauses))
 
   return [sql.join(' '), bindings]
 }
