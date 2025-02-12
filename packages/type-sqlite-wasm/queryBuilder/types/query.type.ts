@@ -257,4 +257,10 @@ export interface IQueryBuilderCommonMethods<T> {
    * const query = queryBuilder.insertRaw('INSERT INTO users (name, age) VALUES (?, ?)', ['John', 25]);
    */
   insertRaw(sql: string, bindings?: Bindings): this
+
+  update(table: string, values: Partial<T>): this
+  updateRaw(sql: string, bindings?: Bindings): this
+
+  delete(): this
+  deleteRaw(sql: string, bindings?: Bindings): this
 }
