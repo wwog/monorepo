@@ -6,7 +6,7 @@ import type {
   WhereRaw,
   WhereType,
 } from '../../types/query.type'
-import { isWhereConditionDescription, mergeLikePatterns } from '../../utils'
+import { isWhereConditionDescription, mergeLikePatterns, validateBindings } from '../../utils'
 
 const operatorMap: Record<keyof BasePartItem, string> = {
   $eq: '=',
@@ -325,100 +325,100 @@ const convertToSQL = (optimizeResult: PreprocessResult): SQLWithBindings => {
     const andConditions: Array<{ sql: string; bindings: any[] }> = []
     const orColumnConditions: Array<{ sql: string; bindings: any[] }> = []
 
-    // Process each operator type
-    ;(Object.keys(operatorMap) as (keyof BasePartItem)[]).forEach(
-      (operator) => {
-        const andKey = `${operator}_AND` as keyof PartItem
-        const orKey = `${operator}_OR` as keyof PartItem
-        const andValues = partItem[andKey] as any[] | undefined
-        const orValues = partItem[orKey] as any[] | undefined
+      // Process each operator type
+      ; (Object.keys(operatorMap) as (keyof BasePartItem)[]).forEach(
+        (operator) => {
+          const andKey = `${operator}_AND` as keyof PartItem
+          const orKey = `${operator}_OR` as keyof PartItem
+          const andValues = partItem[andKey] as any[] | undefined
+          const orValues = partItem[orKey] as any[] | undefined
 
-        if (andValues?.length) {
-          switch (operator) {
-            case '$between':
-            case '$notBetween':
-              // 修改这里的数组访问方式
-              andValues.forEach((range) => {
-                andConditions.push({
-                  sql: `${column} ${operatorMap[operator]} ? AND ?`,
-                  bindings: [range[0], range[1]], // 直接使用数组的两个元素
+          if (andValues?.length) {
+            switch (operator) {
+              case '$between':
+              case '$notBetween':
+                // 修改这里的数组访问方式
+                andValues.forEach((range) => {
+                  andConditions.push({
+                    sql: `${column} ${operatorMap[operator]} ? AND ?`,
+                    bindings: [range[0], range[1]], // 直接使用数组的两个元素
+                  })
                 })
-              })
-              break
-            case '$in':
-            case '$nin':
-              andConditions.push({
-                sql: `${column} ${operatorMap[operator]} (${andValues.map(() => '?').join(', ')})`,
-                bindings: andValues,
-              })
-              break
-            case '$null':
-              andConditions.push({
-                sql: `${column} ${operatorMap[operator]}`,
-                bindings: [],
-              })
-              break
-            case '$like':
-              andValues.forEach((value) => {
+                break
+              case '$in':
+              case '$nin':
                 andConditions.push({
-                  sql: `${column} ${operatorMap[operator]} ?`,
-                  bindings: [value],
+                  sql: `${column} ${operatorMap[operator]} (${andValues.map(() => '?').join(', ')})`,
+                  bindings: andValues,
                 })
-              })
-              break
-            default:
-              andValues.forEach((value) => {
+                break
+              case '$null':
                 andConditions.push({
-                  sql: `${column} ${operatorMap[operator]} ?`,
-                  bindings: [value],
+                  sql: `${column} ${operatorMap[operator]}`,
+                  bindings: [],
                 })
-              })
+                break
+              case '$like':
+                andValues.forEach((value) => {
+                  andConditions.push({
+                    sql: `${column} ${operatorMap[operator]} ?`,
+                    bindings: [value],
+                  })
+                })
+                break
+              default:
+                andValues.forEach((value) => {
+                  andConditions.push({
+                    sql: `${column} ${operatorMap[operator]} ?`,
+                    bindings: [value],
+                  })
+                })
+            }
           }
-        }
 
-        if (orValues?.length) {
-          switch (operator) {
-            case '$between':
-            case '$notBetween':
-              orValues.forEach((range) => {
-                orColumnConditions.push({
-                  sql: `${column} ${operatorMap[operator]} ? AND ?`,
-                  bindings: [range[0], range[1]], 
+          if (orValues?.length) {
+            switch (operator) {
+              case '$between':
+              case '$notBetween':
+                orValues.forEach((range) => {
+                  orColumnConditions.push({
+                    sql: `${column} ${operatorMap[operator]} ? AND ?`,
+                    bindings: [range[0], range[1]],
+                  })
                 })
-              })
-              break
-            case '$in':
-            case '$nin':
-              orColumnConditions.push({
-                sql: `${column} ${operatorMap[operator]} (${orValues.map(() => '?').join(', ')})`,
-                bindings: orValues,
-              })
-              break
-            case '$null':
-              orColumnConditions.push({
-                sql: `${column} ${operatorMap[operator]}`,
-                bindings: [],
-              })
-              break
-            case '$like':
-              orValues.forEach((value) => {
+                break
+              case '$in':
+              case '$nin':
                 orColumnConditions.push({
-                  sql: `${column} ${operatorMap[operator]} ?`,
-                  bindings: [value],
+                  sql: `${column} ${operatorMap[operator]} (${orValues.map(() => '?').join(', ')})`,
+                  bindings: orValues,
                 })
-              })
-              break
-            default:
-              orValues.forEach((value) => {
+                break
+              case '$null':
                 orColumnConditions.push({
-                  sql: `${column} ${operatorMap[operator]} ?`,
-                  bindings: [value],
+                  sql: `${column} ${operatorMap[operator]}`,
+                  bindings: [],
                 })
-              })
+                break
+              case '$like':
+                orValues.forEach((value) => {
+                  orColumnConditions.push({
+                    sql: `${column} ${operatorMap[operator]} ?`,
+                    bindings: [value],
+                  })
+                })
+                break
+              default:
+                orValues.forEach((value) => {
+                  orColumnConditions.push({
+                    sql: `${column} ${operatorMap[operator]} ?`,
+                    bindings: [value],
+                  })
+                })
+            }
           }
-        }
-      },
-    )
+        },
+      )
 
     // Combine AND conditions
     if (andConditions.length > 0) {
@@ -485,6 +485,6 @@ export const whereUnit = (whereClauses: WhereClause[]): SQLWithBindings => {
   const preprocessResult = preprocess(whereClauses)
 
   const sqlWithBindings = convertToSQL(preprocessResult)
-
+  validateBindings(sqlWithBindings)
   return sqlWithBindings
 }

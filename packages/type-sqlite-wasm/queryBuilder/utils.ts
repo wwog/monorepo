@@ -1,7 +1,15 @@
-import type { Raw, WhereConditionDescription } from './types/query.type'
+import type {
+  Raw,
+  SQLWithBindings,
+  WhereConditionDescription,
+} from './types/query.type'
 
 export function quotes(str: string): string {
   return `"${str}"`
+}
+
+export function singleQuote(str: string): string {
+  return `'${str}'`
 }
 
 export function bracket(str: string): string {
@@ -23,35 +31,37 @@ export function isWhereConditionDescription(
  * @returns if `pattern1` can cover `pattern2`, return `true`, otherwise return `false`
  */
 export function canMerge(pattern1: string, pattern2: string): boolean {
-  const regex = new RegExp("^" + pattern1.replace(/%/g, ".*").replace(/_/g, ".") + "$");
-  return regex.test(pattern2);
+  const regex = new RegExp(
+    '^' + pattern1.replace(/%/g, '.*').replace(/_/g, '.') + '$',
+  )
+  return regex.test(pattern2)
 }
 
 export function mergeLikePatterns(patterns: string[]): string[] {
   debugger
   if (patterns.length === 0) {
-    return [];
+    return []
   }
 
   // Remove duplicates to avoid unnecessary calculations
-  const uniquePatterns = Array.from(new Set(patterns));
+  const uniquePatterns = Array.from(new Set(patterns))
 
   // Mark which patterns can be merged
-  const toRemove = new Set<number>();
+  const toRemove = new Set<number>()
 
   // Double loop to check if each pattern can be covered by others
   for (let i = 0; i < uniquePatterns.length; i++) {
     for (let j = 0; j < uniquePatterns.length; j++) {
       if (i !== j && canMerge(uniquePatterns[j]!, uniquePatterns[i]!)) {
         // If patterns[j] can cover patterns[i], then patterns[i] can be removed
-        toRemove.add(i);
-        break;
+        toRemove.add(i)
+        break
       }
     }
   }
 
   // Return patterns that were not marked for removal
-  return uniquePatterns.filter((_, index) => !toRemove.has(index));
+  return uniquePatterns.filter((_, index) => !toRemove.has(index))
 }
 
 /**
@@ -61,22 +71,22 @@ export function mergeLikePatterns(patterns: string[]): string[] {
  * @returns Sanitized SQL string
  */
 export function sanitizeSql(sql: string): string {
-  if (!sql) return '';
+  if (!sql) return ''
 
   // escape single quote
-  let sanitized = sql.replace(/'/g, "''");
+  let sanitized = sql.replace(/'/g, "''")
 
   // escape double quote
-  sanitized = sanitized.replace(/"/g, '""');
+  sanitized = sanitized.replace(/"/g, '""')
 
   // remove multi-line comment
-  sanitized = sanitized.replace(/\/\*[\s\S]*?\*\//g, '');
+  sanitized = sanitized.replace(/\/\*[\s\S]*?\*\//g, '')
 
   // remove single-line comment
-  sanitized = sanitized.replace(/--.*$/gm, '');
+  sanitized = sanitized.replace(/--.*$/gm, '')
 
   // remove the semicolon at the end to prevent multi-statement execution
-  sanitized = sanitized.replace(/;+$/, '');
+  sanitized = sanitized.replace(/;+$/, '')
 
   // remove dangerous SQL keywords
   const dangerousKeywords = [
@@ -87,11 +97,29 @@ export function sanitizeSql(sql: string): string {
     'TRUNCATE',
     'ALTER',
     'EXEC',
-    'EXECUTE'
-  ];
+    'EXECUTE',
+  ]
 
-  const regex = new RegExp(`\\b(${dangerousKeywords.join('|')})\\b`, 'gi');
-  sanitized = sanitized.replace(regex, '');
+  const regex = new RegExp(`\\b(${dangerousKeywords.join('|')})\\b`, 'gi')
+  sanitized = sanitized.replace(regex, '')
 
-  return sanitized.trim();
+  return sanitized.trim()
+}
+
+/**
+ * Validate if the number of bindings matches the number of placeholders in SQL
+ * @throws Error if the number of bindings doesn't match placeholders
+ */
+export function validateBindings(sqlWithBindings: SQLWithBindings): void {
+  const [sql, bindings] = sqlWithBindings
+  // Count question marks that are not escaped
+  const placeholderCount = (sql.match(/(?<!\\)\?/g) || []).length
+
+  if (placeholderCount !== bindings.length) {
+    throw new Error(
+      `SQL binding count mismatch: ${placeholderCount} placeholders but got ${bindings.length} bindings.\n` +
+        `SQL: ${sql}\n` +
+        `Bindings: ${JSON.stringify(bindings)}`,
+    )
+  }
 }

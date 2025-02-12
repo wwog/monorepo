@@ -143,8 +143,6 @@ export interface IQueryBuilderCommonMethods<T> {
    * @param bindings The binding parameters for the SQL query.
    * @example
    * const query = queryBuilder.select('*').fromRaw('SELECT * FROM table WHERE column1 = ?', ['value']);
-   * @example
-   * const query = queryBuilder.select('*').fromRaw('SELECT * FROM table WHERE column1 = :value', { value: 'value' });
    */
   fromRaw(sql: string, bindings?: Bindings): this
   /**
@@ -161,8 +159,6 @@ export interface IQueryBuilderCommonMethods<T> {
    * @param bindings The binding parameters for the SQL query.
    * @example
    * const query = queryBuilder.select('*').from('table').whereRaw('column1 = ?', ['value']);
-   * @example
-   * const query = queryBuilder.select('*').from('table').whereRaw('column1 = :value', { value: 'value' });
    */
   whereRaw(sql: string, bindings?: Bindings): this
   /**

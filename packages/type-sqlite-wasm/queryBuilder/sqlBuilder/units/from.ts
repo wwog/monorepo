@@ -1,7 +1,7 @@
-import type { FromClause } from '../../types/query.type'
-import { bracket } from '../../utils'
+import type { FromClause, SQLWithBindings } from '../../types/query.type'
+import { bracket, validateBindings } from '../../utils'
 
-export const fromUnit = (fromClauses: FromClause[]) => {
+export const fromUnit = (fromClauses: FromClause[]): SQLWithBindings => {
   if (fromClauses.length === 0) {
     throw new Error('FROM clause is required')
   }
@@ -9,15 +9,17 @@ export const fromUnit = (fromClauses: FromClause[]) => {
     throw new Error('Multiple FROM clauses are not supported')
   }
 
-  let query = ''
-  for (let idx = 0; idx < fromClauses.length; idx++) {
-    const element = fromClauses[idx]!
-    if (element.rule) {
-      query += bracket(element.rule)
-    } else if (element.raw) {
-      query += bracket(element.raw.sql)
-    }
+  const fromClause = fromClauses[0]!
+  let sql = ''
+  let bindings: any[] = []
+
+  if (fromClause.rule) {
+    sql = bracket(fromClause.rule)
+  } else if (fromClause.raw) {
+    sql = bracket(fromClause.raw.sql)
+    bindings = fromClause.raw.bindings || []
+    validateBindings([fromClause.raw.sql, bindings])
   }
 
-  return 'FROM ' + query
+  return [`FROM ${sql}`, bindings]
 }
