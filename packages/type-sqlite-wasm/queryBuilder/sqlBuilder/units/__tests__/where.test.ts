@@ -65,6 +65,13 @@ describe('whereUnit', () => {
       expected: ['WHERE "deletedAt" IS NULL', []],
     },
     {
+      name: 'NOT NULL条件',
+      input: [
+        { rule: { condition: { deletedAt: { $null: false } }, type: 'AND' } },
+      ],
+      expected: ['WHERE "deletedAt" IS NOT NULL', []],
+    },
+    {
       name: 'LIKE条件',
       input: [
         { rule: { condition: { name: { $like: 'John%' } }, type: 'AND' } },

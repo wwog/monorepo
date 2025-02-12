@@ -10,6 +10,7 @@ export interface QueryDescription<T> {
   groupByClauses: GroupByClause<T>[]
   offsetValue?: number
   limitValue?: number
+  insertClauses: InsertClause<T>[]
 }
 /**
  * Convert QueryBuilder description object {@link QueryDescription} to SQL string
@@ -119,6 +120,14 @@ export interface GroupByClause<T = any> {
   }
   raw?: Raw
 }
+
+export interface InsertClause<T = any> {
+  rule?: {
+    table: string
+    values: Partial<T> | Partial<T>[]
+  }
+  raw?: Raw
+}
 //#endregion
 
 export interface IQueryBuilderCommonMethods<T> {
@@ -154,6 +163,12 @@ export interface IQueryBuilderCommonMethods<T> {
    * const query = queryBuilder.select('*').from('table').where({ column1: 'value' });
    */
   where(conditions: WhereCondition<T>): this
+  /**
+   * Specify the conditions for the 'OR WHERE' clause.
+   * @param conditions The conditions to filter the query results.
+   * @example
+   * const query = queryBuilder.select('*').from('table').where({ column1: 'value' }).orWhere({ column2: 'value' });
+   */
   orWhere(conditions: WhereCondition<T>): this
   /**
    * Specify the conditions for the 'WHERE' clause using a raw SQL query.
@@ -163,6 +178,13 @@ export interface IQueryBuilderCommonMethods<T> {
    * const query = queryBuilder.select('*').from('table').whereRaw('column1 = ?', ['value']);
    */
   whereRaw(sql: string, bindings?: Bindings): this
+  /**
+   * Specify the conditions for the 'OR WHERE' clause using a raw SQL query.
+   * @param sql The SQL query to execute
+   * @param bindings The binding parameters for the SQL query.
+   * @example
+   * const query = queryBuilder.select('*').from('table').whereRaw('column1 = ?', ['value']).orWhereRaw('column2 = ?', ['value']);
+   */
   orWhereRaw(sql: string, bindings?: Bindings): this
   /**
    * Specify the number of records to skip.
@@ -212,4 +234,21 @@ export interface IQueryBuilderCommonMethods<T> {
    * const query = queryBuilder.select('*').from('table').groupByRaw('column1');
    */
   groupByRaw(sql: string, bindings?: Bindings): this
+  /**
+   * Insert records into the table.
+   * @param table The table to insert into
+   * @param values The values to insert
+   * @example
+   * const query = queryBuilder.insert('users', { name: 'John', age: 25 });
+   * const query = queryBuilder.insert('users', [{ name: 'John' }, { name: 'Jane' }]);
+   */
+  insert(table: string, values: Partial<T> | Partial<T>[]): this
+  /**
+   * Insert records using raw SQL.
+   * @param sql The SQL query to execute
+   * @param bindings The binding parameters for the SQL query
+   * @example
+   * const query = queryBuilder.insertRaw('INSERT INTO users (name, age) VALUES (?, ?)', ['John', 25]);
+   */
+  insertRaw(sql: string, bindings?: Bindings): this
 }

@@ -23,7 +23,7 @@ const operatorMap: Record<keyof BasePartItem, string> = {
   $like: 'LIKE',
   $in: 'IN',
   $nin: 'NOT IN',
-  $null: 'IS NULL',
+  $null: 'IS',
   $between: 'BETWEEN',
   $notBetween: 'NOT BETWEEN',
 }
@@ -360,7 +360,7 @@ const convertToSQL = (optimizeResult: PreprocessResult): SQLWithBindings => {
               break
             case '$null':
               andConditions.push({
-                sql: `${_column} ${operatorMap[operator]}`,
+                sql: `${_column} ${operatorMap[operator]} ${andValues[0] ? 'NULL' : 'NOT NULL'}`,
                 bindings: [],
               })
               break
@@ -401,9 +401,11 @@ const convertToSQL = (optimizeResult: PreprocessResult): SQLWithBindings => {
               })
               break
             case '$null':
-              orColumnConditions.push({
-                sql: `${_column} ${operatorMap[operator]}`,
-                bindings: [],
+              orValues.forEach((value) => {
+                orColumnConditions.push({
+                  sql: `${_column} ${operatorMap[operator]} ${value ? 'NULL' : 'NOT NULL'}`,
+                  bindings: [],
+                })
               })
               break
             case '$like':

@@ -32,6 +32,7 @@ export interface QueryBuilderOptions {
  */
 export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
   public description: QueryDescription<T> = {
+    insertClauses: [],
     selectClauses: [],
     fromClauses: [],
     whereClauses: [],
@@ -114,6 +115,21 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.groupByClauses.push({ raw: { sql, bindings } })
     return this
   }
+
+  insert(table: string, values: Partial<T> | Partial<T>[]): this {
+    this.description.insertClauses.push({
+      rule: { table, values }
+    })
+    return this
+  }
+
+  insertRaw(sql: string, bindings?: Bindings): this {
+    this.description.insertClauses.push({
+      raw: { sql, bindings }
+    })
+    return this
+  }
+
   toSQL(): SQLWithBindings {
     try {
       const res = this.builder(this.description)

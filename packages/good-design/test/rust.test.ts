@@ -1,7 +1,7 @@
-import { match } from '../rust/mod'
+import { match } from '../src/rust/mod'
 //vitest
-import { None, Some } from '../rust/option'
-import { Err, Ok } from '../rust/result'
+import { None, Some } from '../src/rust/option'
+import { Err, Ok } from '../src/rust/result'
 import { describe, it, expect, vitest } from 'vitest'
 
 describe('matchOption', () => {

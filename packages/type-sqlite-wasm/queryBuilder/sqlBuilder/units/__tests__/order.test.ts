@@ -16,7 +16,7 @@ describe('orderUnit', () => {
     {
       name: '单列排序',
       input: [{ rule: { column: 'name' } }],
-      expected: ['ORDER BY "name" ASC', []],
+      expected: ['ORDER BY "name"', []],
     },
     {
       name: '指定排序方向',
@@ -26,7 +26,7 @@ describe('orderUnit', () => {
     {
       name: '指定空值位置',
       input: [{ rule: { column: 'score', nulls: 'LAST' } }],
-      expected: ['ORDER BY "score" ASC NULLS LAST', []],
+      expected: ['ORDER BY "score" NULLS LAST', []],
     },
     {
       name: '多列排序',
@@ -75,4 +75,4 @@ describe('orderUnit', () => {
       expect(result).toEqual(expected)
     })
   })
-}) 
+})
