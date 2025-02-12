@@ -1,7 +1,9 @@
 import type {
+  Bindings,
   FromClause,
   QueryDescription,
   SelectClause,
+  SQLWithBindings,
   WhereClause,
 } from '../types/query.type'
 import { quotes, bracket, isWhereConditionDescription } from '../utils'
@@ -9,7 +11,9 @@ import { fromUnit } from './units/from'
 import { selectUnit } from './units/select'
 import { whereUnit } from './units/where'
 
-export function Sqlite3SQLBuilder(description: QueryDescription<any>): string {
+export function Sqlite3SQLBuilder(
+  description: QueryDescription<any>,
+): SQLWithBindings {
   const {
     selectClauses,
     fromClauses,
@@ -20,13 +24,17 @@ export function Sqlite3SQLBuilder(description: QueryDescription<any>): string {
     limitValue,
   } = description
 
-  let query = ``
-  const selectStr = selectUnit(selectClauses)
-  const fromStr = fromUnit(fromClauses)
-  query += `${selectStr} ${fromStr} `
-  if (whereClauses.length > 0) {
-    console.log(whereUnit(whereClauses))
+  const sql: string[] = []
+  const bindings: Bindings = []
+
+  const pushUnitResult = (unit: SQLWithBindings) => {
+    sql.push(unit[0])
+    bindings.push(...unit[1])
   }
 
-  return query
+  pushUnitResult(selectUnit(selectClauses))
+  pushUnitResult(fromUnit(fromClauses))
+  pushUnitResult(whereUnit(whereClauses))
+
+  return [sql.join(' '), bindings]
 }

@@ -14,7 +14,7 @@ export interface QueryDescription<T> {
 /**
  * Convert QueryBuilder description object {@link QueryDescription} to SQL string
  */
-export type SQLBuilder = (description: QueryDescription<any>) => string
+export type SQLBuilder = (description: QueryDescription<any>) => SQLWithBindings
 
 export interface WhereConditionDescription {
   /** equal */

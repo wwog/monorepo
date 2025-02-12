@@ -1,5 +1,5 @@
 import type { FromClause, SQLWithBindings } from '../../types/query.type'
-import { bracket, validateBindings } from '../../utils'
+import { bracket, quotes, validateBindings } from '../../utils'
 
 export const fromUnit = (fromClauses: FromClause[]): SQLWithBindings => {
   if (fromClauses.length === 0) {
@@ -14,7 +14,7 @@ export const fromUnit = (fromClauses: FromClause[]): SQLWithBindings => {
   let bindings: any[] = []
 
   if (fromClause.rule) {
-    sql = bracket(fromClause.rule)
+    sql = quotes(fromClause.rule)
   } else if (fromClause.raw) {
     sql = bracket(fromClause.raw.sql)
     bindings = fromClause.raw.bindings || []

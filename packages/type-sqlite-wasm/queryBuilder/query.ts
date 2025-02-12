@@ -12,6 +12,7 @@ import type {
   WhereClause,
   Bindings,
   WhereCondition,
+  SQLWithBindings,
 } from './types/query.type'
 import { Sqlite3SQLBuilder } from './sqlBuilder/sqlite3'
 
@@ -71,11 +72,15 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     return this
   }
   where(condition: WhereCondition<T>): this {
-    this.description.whereClauses.push({ rule: { type: 'AND', condition: condition } })
+    this.description.whereClauses.push({
+      rule: { type: 'AND', condition: condition },
+    })
     return this
   }
   orWhere(condition: WhereCondition<T>): this {
-    this.description.whereClauses.push({ rule: { type: 'OR', condition: condition } })
+    this.description.whereClauses.push({
+      rule: { type: 'OR', condition: condition },
+    })
     return this
   }
   whereRaw(sql: string, bindings?: Bindings): this {
@@ -114,10 +119,10 @@ export class QueryBuilder<T> implements IQueryBuilderCommonMethods<T> {
     this.description.groupByClauses.push({ raw: { sql } })
     return this
   }
-  toSQL(): string {
+  toSQL(): SQLWithBindings {
     try {
-      this.builder(this.description)
-      return ''
+      const res = this.builder(this.description)
+      return res
     } catch (error) {
       if (error instanceof Error) {
         throw new Error('Failed to generate SQL: ' + error.message)
