@@ -65,55 +65,13 @@ export function mergeLikePatterns(patterns: string[]): string[] {
 }
 
 /**
- * Sanitize SQL string to prevent SQL injection attacks.
- * This function escapes special characters and removes dangerous SQL keywords.
- * @param sql The SQL string to sanitize
- * @returns Sanitized SQL string
- */
-export function sanitizeSql(sql: string): string {
-  if (!sql) return ''
-
-  // escape single quote
-  let sanitized = sql.replace(/'/g, "''")
-
-  // escape double quote
-  sanitized = sanitized.replace(/"/g, '""')
-
-  // remove multi-line comment
-  sanitized = sanitized.replace(/\/\*[\s\S]*?\*\//g, '')
-
-  // remove single-line comment
-  sanitized = sanitized.replace(/--.*$/gm, '')
-
-  // remove the semicolon at the end to prevent multi-statement execution
-  sanitized = sanitized.replace(/;+$/, '')
-
-  // remove dangerous SQL keywords
-  const dangerousKeywords = [
-    'DROP',
-    'DELETE',
-    'UPDATE',
-    'INSERT',
-    'TRUNCATE',
-    'ALTER',
-    'EXEC',
-    'EXECUTE',
-  ]
-
-  const regex = new RegExp(`\\b(${dangerousKeywords.join('|')})\\b`, 'gi')
-  sanitized = sanitized.replace(regex, '')
-
-  return sanitized.trim()
-}
-
-/**
  * Validate if the number of bindings matches the number of placeholders in SQL
  * @throws Error if the number of bindings doesn't match placeholders
  */
 export function validateBindings(sqlWithBindings: SQLWithBindings): void {
   const [sql, bindings] = sqlWithBindings
   // Count question marks that are not escaped
-  const placeholderCount = (sql.match(/(?<!\\)\?/g) || []).length
+  const placeholderCount = (sql.match(/\?/g) || []).length
 
   if (placeholderCount !== bindings.length) {
     throw new Error(
