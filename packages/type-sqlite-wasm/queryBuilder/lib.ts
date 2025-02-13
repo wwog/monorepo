@@ -9,8 +9,11 @@ const queryBuilder = new QueryBuilder<{
   name: string
   age: number
 }>()
-  .select()
-  .from('users')
+  .insert('users', [
+    { name: 'John', age: 25, id: 1 },
+    { name: 'Jane', age: 23 },
+  ])
+  .returning(['id', 'name'])
   .toSQL()
 
 console.log(queryBuilder)

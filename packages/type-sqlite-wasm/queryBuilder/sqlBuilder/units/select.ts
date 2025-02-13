@@ -9,7 +9,11 @@ export const selectUnit = (selectClauses?: SelectClause[]): SQLWithBindings => {
     query.push('*')
   } else {
     selectClauses.forEach((selectClause) => {
-      query.push(quotes(selectClause.rule))
+      if (selectClause.rule === '*') {
+        query.push('*')
+      } else {
+        query.push(quotes(selectClause.rule))
+      }
     })
   }
   return ['SELECT ' + query.join(', '), []]

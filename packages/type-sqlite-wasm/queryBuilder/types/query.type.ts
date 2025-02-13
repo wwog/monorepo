@@ -8,8 +8,10 @@ export interface SQLBuilder {
   groupBy: (clauses?: GroupByClause[]) => SQLWithBindings
   orderBy: (clauses?: OrderByClause[]) => SQLWithBindings
   returning: (clauses?: ReturningClause[]) => SQLWithBindings
+  insert: (clauses: InsertClause[]) => SQLWithBindings
   offset: (value?: number) => SQLWithBindings
   limit: (value?: number) => SQLWithBindings
+  update: (clauses: UpdateClause[]) => SQLWithBindings
 }
 export type SelectColumn<T> = Keyof<T> | '*' | 'rowid'
 export type Column<T> = Keyof<T> | 'rowid'
@@ -153,6 +155,14 @@ export interface ReturningClause<T = any> {
   rule?: SelectColumn<T>
   raw?: Raw
 }
+
+export interface DeleteClause {
+  rule?: {
+    table: string
+  }
+  raw?: Raw
+}
+
 //#endregion
 
 export interface IWhereImpl<T> {
@@ -262,6 +272,17 @@ export interface QueryOptions {
   sqlBuilder: SQLBuilder
 }
 
+export abstract class BaseQuery<T> {
+  protected options: QueryOptions
+  protected get sqlBuilder() {
+    return this.options.sqlBuilder
+  }
+  constructor(options: QueryOptions) {
+    this.options = options
+  }
+  abstract toSQL(): SQLWithBindings
+}
+
 export interface ISelectQuery<T>
   extends IWhereImpl<T>,
     IOrderByImpl<T>,
@@ -291,6 +312,7 @@ export interface ISelectQuery<T>
 export interface IUpdateQuery<T>
   extends IWhereImpl<T>,
     IReturningImpl<T>,
+    IOrderByImpl<T>,
     ILimitImpl {
   /**
    * Update records in the table.
@@ -321,14 +343,6 @@ export interface IDeleteQuery<T>
    * const query = queryBuilder.delete();
    */
   delete(): IDeleteQuery<T>
-  /**
-   * Delete records using raw SQL.
-   * @param sql The SQL query to execute.
-   * @param bindings The binding parameters for the SQL query.
-   * @example
-   * const query = queryBuilder.deleteRaw('DELETE FROM users WHERE id = ?', [1]);
-   */
-  deleteRaw(sql: string, bindings?: Bindings): IDeleteQuery<T>
 }
 
 export interface IInsertQuery<T> extends IWhereImpl<T>, IReturningImpl<T> {

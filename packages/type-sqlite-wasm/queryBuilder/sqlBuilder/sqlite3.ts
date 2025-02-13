@@ -7,6 +7,8 @@ import type {
   OrderByClause,
   SQLBuilder,
   ReturningClause,
+  InsertClause,
+  UpdateClause,
 } from '../types/query.type'
 import { fromUnit } from './units/from'
 import { selectUnit } from './units/select'
@@ -16,6 +18,8 @@ import { orderUnit } from './units/order'
 import { offsetUnit } from './units/offset'
 import { limitUnit } from './units/limit'
 import { returningUnit } from './units/returning'
+import { insertUnit } from './units/insert'
+import { updateUnit } from './units/update'
 
 export const Sqlite3SQLBuilder: SQLBuilder = {
   select: (clauses?: SelectClause[]): SQLWithBindings => {
@@ -41,5 +45,11 @@ export const Sqlite3SQLBuilder: SQLBuilder = {
   },
   returning: (clauses?: ReturningClause[]): SQLWithBindings => {
     return returningUnit(clauses)
+  },
+  insert: (clauses: InsertClause[]): SQLWithBindings => {
+    return insertUnit(clauses)
+  },
+  update: (clauses: UpdateClause[]): SQLWithBindings => {
+    return updateUnit(clauses)
   },
 }

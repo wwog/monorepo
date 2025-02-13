@@ -9,7 +9,7 @@ const MAX_BATCH_SIZE = 10000
 
 export const insertUnit = (insertClauses: InsertClause[]): SQLWithBindings => {
   if (insertClauses.length === 0) {
-    return ['', []]
+    throw new Error('No INSERT clause provided')
   }
 
   if (insertClauses.length > 1) {

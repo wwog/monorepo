@@ -16,7 +16,7 @@ export const fromUnit = (fromClauses?: FromClause[]): SQLWithBindings => {
   if (fromClause.rule) {
     sql = quotes(fromClause.rule)
   } else if (fromClause.raw) {
-    sql = bracket(fromClause.raw.sql)
+    sql = fromClause.raw.sql
     bindings = fromClause.raw.bindings || []
     validateBindings([fromClause.raw.sql, bindings])
   }

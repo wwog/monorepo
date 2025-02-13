@@ -1,54 +1,32 @@
 import {
-  type ISelectQuery,
+  type IDeleteQuery,
   type Bindings,
-  type Column,
-  type OrderByType,
-  type QueryOptions,
   type SelectColumn,
   type WhereCondition,
-  type SelectClause,
   type SQLWithBindings,
+  type DeleteClause,
   BaseQuery,
+  type QueryOptions,
 } from '../types/query.type'
-import {
-  FromMixin,
-  GroupByMixin,
-  LimitMixin,
-  OrderByMixin,
-  WhereMixin,
-} from './mixin'
+import { FromMixin, LimitMixin, ReturningMixin, WhereMixin } from './mixin'
 
-export class SelectQuery<T> extends BaseQuery<T> implements ISelectQuery<T> {
-  protected selectClauses: SelectClause[] = []
-  protected offsetValue?: number
+export class DeleteQuery<T> extends BaseQuery<T> implements IDeleteQuery<T> {
+  protected deleteClauses: DeleteClause[] = []
   // Mixins
   protected whereMixin: WhereMixin<T>
-  protected fromMixin: FromMixin
-  protected orderByMixin: OrderByMixin<T>
-  protected groupByMixin: GroupByMixin<T>
+  protected returningMixin: ReturningMixin<T>
   protected limitMixin: LimitMixin
+  protected fromMixin: FromMixin
 
   constructor(options: QueryOptions) {
     super(options)
-
     this.whereMixin = new WhereMixin(this.sqlBuilder)
-    this.fromMixin = new FromMixin(this.sqlBuilder)
-    this.orderByMixin = new OrderByMixin(this.sqlBuilder)
-    this.groupByMixin = new GroupByMixin(this.sqlBuilder)
+    this.returningMixin = new ReturningMixin(this.sqlBuilder)
     this.limitMixin = new LimitMixin(this.sqlBuilder)
+    this.fromMixin = new FromMixin(this.sqlBuilder)
   }
 
-  // Select implementation
-  select(columns?: SelectColumn<T> | SelectColumn<T>[]) {
-    if (columns === undefined) {
-      this.selectClauses.push({ rule: '*' })
-    } else if (typeof columns === 'string') {
-      this.selectClauses.push({ rule: columns })
-    } else {
-      columns.forEach((column) => {
-        this.selectClauses.push({ rule: column })
-      })
-    }
+  delete(): this {
     return this
   }
 
@@ -72,33 +50,18 @@ export class SelectQuery<T> extends BaseQuery<T> implements ISelectQuery<T> {
     return this
   }
 
-  orderBy(column: Column<T>, direction?: OrderByType): this {
-    this.orderByMixin.orderBy(column, direction)
+  returning(columns?: SelectColumn<T> | SelectColumn<T>[]): this {
+    this.returningMixin.returning(columns)
     return this
   }
 
-  orderByRaw(sql: string, bindings?: Bindings): this {
-    this.orderByMixin.orderByRaw(sql, bindings)
-    return this
-  }
-
-  groupBy(column: Column<T>): this {
-    this.groupByMixin.groupBy(column)
-    return this
-  }
-
-  groupByRaw(sql: string, bindings?: Bindings): this {
-    this.groupByMixin.groupByRaw(sql, bindings)
+  returningRaw(sql: string, bindings?: Bindings): this {
+    this.returningMixin.returningRaw(sql, bindings)
     return this
   }
 
   limit(limit: number): this {
     this.limitMixin.limit(limit)
-    return this
-  }
-
-  offset(offset: number): this {
-    this.offsetValue = offset
     return this
   }
 
@@ -115,9 +78,9 @@ export class SelectQuery<T> extends BaseQuery<T> implements ISelectQuery<T> {
   toSQL(): SQLWithBindings {
     let sql = ''
     let bindings: Bindings = []
+
     const pushResult = (result: SQLWithBindings) => {
       const noSpaceResult = result[0].trim()
-
       if (noSpaceResult !== '') {
         if (sql !== '') {
           sql += ' '
@@ -127,17 +90,25 @@ export class SelectQuery<T> extends BaseQuery<T> implements ISelectQuery<T> {
       }
     }
 
-    pushResult(this.sqlBuilder.select(this.selectClauses))
+    // Process DELETE
+    pushResult(['DELETE', []])
+
+    // Add FROM clause if exists
     pushResult(this.fromMixin.toSQL())
+
+    // Add WHERE clause if exists
     pushResult(this.whereMixin.toSQL())
-    pushResult(this.groupByMixin.toSQL())
-    //HAVING
-    pushResult(this.orderByMixin.toSQL())
+
+    // Add LIMIT clause if exists
     pushResult(this.limitMixin.toSQL())
-    pushResult(this.sqlBuilder.offset(this.offsetValue))
+
+    // Add RETURNING clause if exists
+    pushResult(this.returningMixin.toSQL())
+
     if (sql === '') {
       throw new Error('No valid SQL generated')
     }
+
     sql += ';'
     return [sql, bindings]
   }
