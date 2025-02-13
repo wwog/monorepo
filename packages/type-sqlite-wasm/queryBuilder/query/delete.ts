@@ -17,6 +17,7 @@ export class DeleteQuery<T> extends BaseQuery<T> implements IDeleteQuery<T> {
   protected returningMixin: ReturningMixin<T>
   protected limitMixin: LimitMixin
   protected fromMixin: FromMixin
+  protected isCalledDelete = false
 
   constructor(options: QueryOptions) {
     super(options)
@@ -27,6 +28,10 @@ export class DeleteQuery<T> extends BaseQuery<T> implements IDeleteQuery<T> {
   }
 
   delete(): this {
+    if (this.isCalledDelete) {
+      throw new Error('Multiple DELETE clauses are not supported')
+    }
+    this.isCalledDelete = true
     return this
   }
 

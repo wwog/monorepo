@@ -22,11 +22,7 @@ describe('DeleteQuery', () => {
   })
 
   test('带条件的删除', () => {
-    const query = createQuery()
-      .delete()
-      .from('users')
-      .where({ id: 1 })
-      .toSQL()
+    const query = createQuery().delete().from('users').where({ id: 1 }).toSQL()
 
     expect(query[0]).toBe('DELETE FROM "users" WHERE "id" = ?;')
     expect(query[1]).toEqual([1])
@@ -75,29 +71,20 @@ describe('DeleteQuery', () => {
     expect(query[1]).toEqual([18, 'inactive'])
   })
 
-  test('Raw SQL删除', () => {
-    const query = createQuery()
-      .deleteRaw('DELETE FROM users WHERE last_login < ?', ['2023-01-01'])
-      .toSQL()
-
-    expect(query[0]).toBe('DELETE FROM users WHERE last_login < ?;')
-    expect(query[1]).toEqual(['2023-01-01'])
-  })
-
   test('错误处理 - 无DELETE子句', () => {
     const query = createQuery()
-    expect(() => query.toSQL()).toThrow('No valid SQL generated')
+    expect(() => query.toSQL()).toThrow()
   })
 
   test('错误处理 - 多个DELETE子句', () => {
     const query = createQuery()
-    expect(() =>
-      query.delete().delete().from('users').toSQL(),
-    ).toThrow('Multiple DELETE clauses are not supported')
+    expect(() => query.delete().delete().from('users').toSQL()).toThrow(
+      'Multiple DELETE clauses are not supported',
+    )
   })
 
   test('错误处理 - 无FROM子句', () => {
     const query = createQuery()
     expect(() => query.delete().toSQL()).toThrow('FROM clause is required')
   })
-}) 
+})

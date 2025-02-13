@@ -7,8 +7,8 @@ import { quotes, validateBindings } from '../../utils'
 
 const MAX_BATCH_SIZE = 10000
 
-export const insertUnit = (insertClauses: InsertClause[]): SQLWithBindings => {
-  if (insertClauses.length === 0) {
+export const insertUnit = (insertClauses?: InsertClause[]): SQLWithBindings => {
+  if (!insertClauses || insertClauses.length === 0) {
     throw new Error('No INSERT clause provided')
   }
 
@@ -38,31 +38,35 @@ export const insertUnit = (insertClauses: InsertClause[]): SQLWithBindings => {
     }
 
     // get unique column names and sort them to ensure consistent order
-    const columns = Array.from(
-      new Set(valuesArray.flatMap((obj) => Object.keys(obj))),
-    ).sort()
+    const columns = Array.from(new Set(valuesArray.flatMap(Object.keys))).sort()
 
     if (columns.length === 0) {
       throw new Error('No columns provided for INSERT')
     }
 
-    // add quotes to each column name
-    const quotedColumns = columns.map((col) => quotes(col))
+    // add quotes to column names and create table statement once
+    const tableStatement = `INSERT INTO ${quotes(table)} (${columns.map(quotes).join(', ')})`
 
-    // create placeholders for each row of data
+    // create placeholders and collect bindings in one pass
     const placeholders = valuesArray
-      .map(() => `(${columns.map(() => '?').join(', ')})`)
+      .map(
+        (obj) =>
+          `(${columns
+            .map((col) => {
+              if (col in obj) {
+                const value = obj[col]
+                if (value !== null) {
+                  bindings.push(value)
+                  return '?'
+                }
+              }
+              return 'NULL'
+            })
+            .join(', ')})`,
+      )
       .join(', ')
 
-    // collect all values in the order of columns
-    valuesArray.forEach((obj) => {
-      columns.forEach((col) => {
-        // if the value does not exist, use null
-        bindings.push(col in obj ? obj[col] : null)
-      })
-    })
-
-    sql = `INSERT INTO ${quotes(table)} (${quotedColumns.join(', ')}) VALUES ${placeholders}`
+    sql = `${tableStatement} VALUES ${placeholders}`
   }
 
   const result: SQLWithBindings = [sql, bindings]

@@ -1,19 +1,20 @@
 import { QueryBuilder } from './query'
+import { insertUnit } from './sqlBuilder/units/insert'
 
 export * from './query'
 export * from './types/query.type'
 export * from './utils'
 
-const queryBuilder = new QueryBuilder<{
-  id: number
-  name: string
-  age: number
-}>()
-  .insert('users', [
-    { name: 'John', age: 25, id: 1 },
-    { name: 'Jane', age: 23 },
-  ])
-  .returning(['id', 'name'])
-  .toSQL()
-
-console.log(queryBuilder)
+console.log(
+  insertUnit([
+    {
+      rule: {
+        table: 'users',
+        values: [
+          { name: 'John', age: 25, role: 'admin' },
+          { name: 'Jane', age: 23 },
+        ],
+      },
+    },
+  ]),
+)

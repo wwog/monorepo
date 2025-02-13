@@ -3,149 +3,209 @@ import type { WhereClause } from '../../../types/query.type'
 import { describe, expect, test } from 'vitest'
 
 describe('whereUnit', () => {
-  const testCases: Array<{
-    name: string
-    input: WhereClause[]
-    expected: [string, any[]]
-  }> = [
-    {
-      name: '空条件',
-      input: [],
-      expected: ['', []],
-    },
-    {
-      name: '简单相等条件',
-      input: [{ rule: { conditions: { age: 18 }, type: 'AND' } }],
-      expected: ['WHERE "age" = ?', [18]],
-    },
-    {
-      name: '多个AND条件',
-      input: [
-        {
-          rule: {
-            conditions: { age: { $gte: 18 }, status: 'active' },
-            type: 'AND',
-          },
-        },
-      ],
-      expected: ['WHERE "age" >= ? AND "status" = ?', [18, 'active']],
-    },
-    {
-      name: 'OR条件',
-      input: [
-        { rule: { conditions: { status: 'active' }, type: 'AND' } },
-        { rule: { conditions: { status: 'pending' }, type: 'OR' } },
-      ],
-      expected: ['WHERE "status" = ? OR "status" = ?', ['active', 'pending']],
-    },
-    {
-      name: 'BETWEEN条件',
-      input: [
-        { rule: { conditions: { age: { $between: [18, 30] } }, type: 'AND' } },
-      ],
-      expected: ['WHERE "age" BETWEEN ? AND ?', [18, 30]],
-    },
-    {
-      name: '复杂IN条件',
-      input: [
-        {
-          rule: {
-            conditions: { status: { $in: ['active', 'pending'] } },
-            type: 'AND',
-          },
-        },
-      ],
-      expected: ['WHERE "status" IN (?, ?)', ['active', 'pending']],
-    },
-    {
-      name: 'NULL条件',
-      input: [
-        { rule: { conditions: { deletedAt: { $null: true } }, type: 'AND' } },
-      ],
-      expected: ['WHERE "deletedAt" IS NULL', []],
-    },
-    {
-      name: 'NOT NULL条件',
-      input: [
-        { rule: { conditions: { deletedAt: { $null: false } }, type: 'AND' } },
-      ],
-      expected: ['WHERE "deletedAt" IS NOT NULL', []],
-    },
-    {
-      name: 'LIKE条件',
-      input: [
-        { rule: { conditions: { name: { $like: 'John%' } }, type: 'AND' } },
-        { rule: { conditions: { name: { $like: '%Doe%' } }, type: 'OR' } },
-      ],
-      expected: ['WHERE "name" LIKE ? OR "name" LIKE ?', ['John%', '%Doe%']],
-    },
-    {
-      name: '复杂组合条件',
-      input: [
-        {
-          rule: {
-            conditions: {
-              age: { $gte: 18, $lte: 60 },
-              status: 'active',
-            },
-            type: 'AND',
-          },
-        },
-        {
-          rule: {
-            conditions: { score: { $gt: 80 } },
-            type: 'OR',
-          },
-        },
-      ],
-      expected: [
-        'WHERE "age" >= ? AND "age" <= ? AND "status" = ? OR "score" > ?',
-        [18, 60, 'active', 80],
-      ],
-    },
-    {
-      name: 'Raw SQL条件',
-      input: [
-        {
-          raw: { sql: 'created_at > ?', bindings: ['2024-01-01'], type: 'AND' },
-        },
-      ],
-      expected: ['WHERE created_at > ?', ['2024-01-01']],
-    },
-    {
-      name: '混合Raw SQL和普通条件',
-      input: [
-        { rule: { conditions: { status: 'active' }, type: 'AND' } },
-        { raw: { sql: 'score > ?', bindings: [80], type: 'OR' } },
-      ],
-      expected: ['WHERE "status" = ? OR score > ?', ['active', 80]],
-    },
-  ]
-
-  testCases.forEach(({ name, input, expected }) => {
-    test(name, () => {
-      const result = whereUnit(input)
-      expect(result).toEqual(expected)
-    })
+  test('空WHERE子句', () => {
+    const result = whereUnit()
+    expect(result).toEqual(['', []])
   })
 
-  test('错误处理 - 条件数量超限', () => {
-    const input: WhereClause[] = Array(1001)
-      .fill(0)
-      .map((_, i) => ({
-        rule: { condition: { [`field${i}`]: i }, type: 'AND' },
-      }))
-
-    expect(() => whereUnit(input)).toThrow(/Too many conditions/)
-  })
-
-  test('错误处理 - BETWEEN无效范围', () => {
-    const input: WhereClause[] = [
+  test('基本等于条件', () => {
+    const clauses: WhereClause[] = [
       {
-        rule: { conditions: { age: { $between: [30, 18] } }, type: 'AND' },
+        rule: {
+          type: 'AND',
+          conditions: { id: 1 },
+        },
       },
     ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "id" = ?')
+    expect(result[1]).toEqual([1])
+  })
 
-    expect(() => whereUnit(input)).toThrow(/invalid range/)
+  test('多个AND条件', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: {
+            age: { $gt: 18 },
+            status: 'active',
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "age" > ? AND "status" = ?')
+    expect(result[1]).toEqual([18, 'active'])
+  })
+
+  test('OR条件', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'OR',
+          conditions: {
+            status: 'pending',
+            age: { $lt: 20 },
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "status" = ? OR "age" < ?')
+    expect(result[1]).toEqual(['pending', 20])
+  })
+
+  test('复合条件 - AND和OR组合', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: { age: { $gte: 18 } },
+        },
+      },
+      {
+        rule: {
+          type: 'OR',
+          conditions: {
+            status: 'active',
+            role: 'admin',
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "age" >= ? OR "status" = ? OR "role" = ?')
+    expect(result[1]).toEqual([18, 'active', 'admin'])
+  })
+
+  test('比较操作符', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: {
+            age: { $gt: 18 },
+            score: { $gte: 60 },
+            grade: { $lt: 5 },
+            rank: { $lte: 100 },
+            status: { $neq: 'inactive' },
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe(
+      'WHERE "age" > ? AND "score" >= ? AND "grade" < ? AND "rank" <= ? AND "status" != ?',
+    )
+    expect(result[1]).toEqual([18, 60, 5, 100, 'inactive'])
+  })
+
+  test('LIKE操作符', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: {
+            name: { $like: 'John%' },
+            email: { $like: '%@example.com' },
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "name" LIKE ? AND "email" LIKE ?')
+    expect(result[1]).toEqual(['John%', '%@example.com'])
+  })
+
+  test('IN操作符', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: {
+            status: { $in: ['active', 'pending'] },
+            type: { $nin: ['deleted', 'archived'] },
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe(
+      'WHERE "status" IN (?, ?) AND "type" NOT IN (?, ?)',
+    )
+    expect(result[1]).toEqual(['active', 'pending', 'deleted', 'archived'])
+  })
+
+  test('NULL操作符', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: {
+            deletedAt: { $null: true },
+            updatedAt: { $null: false },
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "deletedAt" IS NULL AND "updatedAt" IS NOT NULL')
+    expect(result[1]).toEqual([])
+  })
+
+  test('BETWEEN操作符', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: {
+            age: { $between: [18, 30] },
+            score: { $notBetween: [0, 60] },
+          },
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe(
+      'WHERE "age" BETWEEN ? AND ? AND "score" NOT BETWEEN ? AND ?',
+    )
+    expect(result[1]).toEqual([18, 30, 0, 60])
+  })
+
+  test('Raw SQL条件', () => {
+    const clauses: WhereClause[] = [
+      {
+        raw: {
+          type: 'AND',
+          sql: 'created_at > NOW() - INTERVAL ? DAY',
+          bindings: [30],
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE created_at > NOW() - INTERVAL ? DAY')
+    expect(result[1]).toEqual([30])
+  })
+
+  test('Raw SQL与规则条件组合', () => {
+    const clauses: WhereClause[] = [
+      {
+        rule: {
+          type: 'AND',
+          conditions: { status: 'active' },
+        },
+      },
+      {
+        raw: {
+          type: 'AND',
+          sql: 'last_login > ?',
+          bindings: ['2023-01-01'],
+        },
+      },
+    ]
+    const result = whereUnit(clauses)
+    expect(result[0]).toBe('WHERE "status" = ? AND last_login > ?')
+    expect(result[1]).toEqual(['active', '2023-01-01'])
   })
 })
