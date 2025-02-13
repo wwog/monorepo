@@ -8,17 +8,65 @@ import type {
   ILimitImpl,
   IOrderByImpl,
   IReturningImpl,
+  IWhereImpl,
   OrderByClause,
   OrderByType,
   ReturningClause,
   SelectColumn,
   SQLBuilder,
   SQLWithBindings,
+  WhereClause,
+  WhereCondition,
 } from '../types/query.type'
 
 export abstract class Mixin {
   constructor(protected builder: SQLBuilder) {}
   abstract toSQL(): SQLWithBindings
+}
+
+export class WhereMixin<T> extends Mixin implements IWhereImpl<T> {
+  protected whereClauses: WhereClause[] = []
+  where(conditions: WhereCondition<T>): this {
+    this.whereClauses.push({
+      rule: {
+        type: 'AND',
+        conditions,
+      },
+    })
+    return this
+  }
+  orWhere(conditions: WhereCondition<T>): this {
+    this.whereClauses.push({
+      rule: {
+        type: 'OR',
+        conditions,
+      },
+    })
+    return this
+  }
+  whereRaw(sql: string, bindings?: Bindings): this {
+    this.whereClauses.push({
+      raw: {
+        sql,
+        bindings,
+        type: 'AND',
+      },
+    })
+    return this
+  }
+  orWhereRaw(sql: string, bindings?: Bindings): this {
+    this.whereClauses.push({
+      raw: {
+        sql,
+        bindings,
+        type: 'OR',
+      },
+    })
+    return this
+  }
+  toSQL() {
+    return this.builder.where(this.whereClauses)
+  }
 }
 
 export class LimitMixin extends Mixin implements ILimitImpl {

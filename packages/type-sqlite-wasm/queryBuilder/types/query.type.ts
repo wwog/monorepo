@@ -258,6 +258,10 @@ export interface IFromImpl {
   fromRaw(sql: string, bindings?: Bindings): this
 }
 
+export interface QueryOptions {
+  sqlBuilder: SQLBuilder
+}
+
 export interface ISelectQuery<T>
   extends IWhereImpl<T>,
     IOrderByImpl<T>,
@@ -273,7 +277,7 @@ export interface ISelectQuery<T>
    * const query = queryBuilder.select('*');
    * @default '*'
    */
-  select(columns?: SelectColumn<T> | SelectColumn<T>[]): ISelectQuery<T>
+  select(columns?: SelectColumn<T> | SelectColumn<T>[]): this
 
   /**
    * Specify the number of records to skip.
@@ -281,7 +285,7 @@ export interface ISelectQuery<T>
    * @example
    * const query = queryBuilder.select('*').from('table').offset(10);
    */
-  offset(offset: number): ISelectQuery<T>
+  offset(offset: number): this
 }
 
 export interface IUpdateQuery<T>
