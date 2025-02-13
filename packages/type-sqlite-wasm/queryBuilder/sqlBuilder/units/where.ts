@@ -229,15 +229,14 @@ const optimizeSet = (
 
   // Handle AND conditions
   if (type === 'AND') {
-    if (key === '$eq') {
-      // when adding an $eq condition of type 'AND', other conditions with equality should cause an error
-      if (target.hasAndCondition) {
-        console.error(target, source, column, key)
-        throw new Error(
-          `"${column}" has already had another condition with equality in AND condition`,
-        )
-      }
+    // when adding an $eq condition of type 'AND', other conditions with equality should cause an error
+    if (target.hasAndCondition) {
+      console.error(target, key)
+      throw new Error(
+        `"${column}" has already had another condition with equality in AND condition`,
+      )
     }
+
     target.hasAndCondition = true
   }
 
@@ -268,7 +267,7 @@ const preprocess = (whereClauses: WhereClause[]): PreprocessResult => {
       return
     }
 
-    const { condition, type } = rule!
+    const { conditions: condition, type } = rule!
     const columns = Object.keys(condition)
     //skip in empty condition
     if (columns.length === 0) {

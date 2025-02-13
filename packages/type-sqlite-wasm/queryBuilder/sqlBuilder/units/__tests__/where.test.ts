@@ -15,7 +15,7 @@ describe('whereUnit', () => {
     },
     {
       name: '简单相等条件',
-      input: [{ rule: { condition: { age: 18 }, type: 'AND' } }],
+      input: [{ rule: { conditions: { age: 18 }, type: 'AND' } }],
       expected: ['WHERE "age" = ?', [18]],
     },
     {
@@ -23,7 +23,7 @@ describe('whereUnit', () => {
       input: [
         {
           rule: {
-            condition: { age: { $gte: 18 }, status: 'active' },
+            conditions: { age: { $gte: 18 }, status: 'active' },
             type: 'AND',
           },
         },
@@ -33,15 +33,15 @@ describe('whereUnit', () => {
     {
       name: 'OR条件',
       input: [
-        { rule: { condition: { status: 'active' }, type: 'AND' } },
-        { rule: { condition: { status: 'pending' }, type: 'OR' } },
+        { rule: { conditions: { status: 'active' }, type: 'AND' } },
+        { rule: { conditions: { status: 'pending' }, type: 'OR' } },
       ],
       expected: ['WHERE "status" = ? OR "status" = ?', ['active', 'pending']],
     },
     {
       name: 'BETWEEN条件',
       input: [
-        { rule: { condition: { age: { $between: [18, 30] } }, type: 'AND' } },
+        { rule: { conditions: { age: { $between: [18, 30] } }, type: 'AND' } },
       ],
       expected: ['WHERE "age" BETWEEN ? AND ?', [18, 30]],
     },
@@ -50,7 +50,7 @@ describe('whereUnit', () => {
       input: [
         {
           rule: {
-            condition: { status: { $in: ['active', 'pending'] } },
+            conditions: { status: { $in: ['active', 'pending'] } },
             type: 'AND',
           },
         },
@@ -60,22 +60,22 @@ describe('whereUnit', () => {
     {
       name: 'NULL条件',
       input: [
-        { rule: { condition: { deletedAt: { $null: true } }, type: 'AND' } },
+        { rule: { conditions: { deletedAt: { $null: true } }, type: 'AND' } },
       ],
       expected: ['WHERE "deletedAt" IS NULL', []],
     },
     {
       name: 'NOT NULL条件',
       input: [
-        { rule: { condition: { deletedAt: { $null: false } }, type: 'AND' } },
+        { rule: { conditions: { deletedAt: { $null: false } }, type: 'AND' } },
       ],
       expected: ['WHERE "deletedAt" IS NOT NULL', []],
     },
     {
       name: 'LIKE条件',
       input: [
-        { rule: { condition: { name: { $like: 'John%' } }, type: 'AND' } },
-        { rule: { condition: { name: { $like: '%Doe%' } }, type: 'OR' } },
+        { rule: { conditions: { name: { $like: 'John%' } }, type: 'AND' } },
+        { rule: { conditions: { name: { $like: '%Doe%' } }, type: 'OR' } },
       ],
       expected: ['WHERE "name" LIKE ? OR "name" LIKE ?', ['John%', '%Doe%']],
     },
@@ -84,7 +84,7 @@ describe('whereUnit', () => {
       input: [
         {
           rule: {
-            condition: {
+            conditions: {
               age: { $gte: 18, $lte: 60 },
               status: 'active',
             },
@@ -93,7 +93,7 @@ describe('whereUnit', () => {
         },
         {
           rule: {
-            condition: { score: { $gt: 80 } },
+            conditions: { score: { $gt: 80 } },
             type: 'OR',
           },
         },
@@ -115,7 +115,7 @@ describe('whereUnit', () => {
     {
       name: '混合Raw SQL和普通条件',
       input: [
-        { rule: { condition: { status: 'active' }, type: 'AND' } },
+        { rule: { conditions: { status: 'active' }, type: 'AND' } },
         { raw: { sql: 'score > ?', bindings: [80], type: 'OR' } },
       ],
       expected: ['WHERE "status" = ? OR score > ?', ['active', 80]],
@@ -142,7 +142,7 @@ describe('whereUnit', () => {
   test('错误处理 - BETWEEN无效范围', () => {
     const input: WhereClause[] = [
       {
-        rule: { condition: { age: { $between: [30, 18] } }, type: 'AND' },
+        rule: { conditions: { age: { $between: [30, 18] } }, type: 'AND' },
       },
     ]
 

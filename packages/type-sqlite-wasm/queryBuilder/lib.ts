@@ -4,23 +4,18 @@ export * from './query'
 export * from './types/query.type'
 export * from './utils'
 
-interface User {
+const queryBuilder = new QueryBuilder<{
   id: number
   name: string
   age: number
-  createdAt: Date
-  status: string
-  score: number
-}
-
-const query = new QueryBuilder<User>()
+}>()
   .from('users')
   .where({
     id: 1,
+    name: {
+      $like: '%n%',
+    },
   })
-  .orderBy('id', 'DESC')
-  .limit(10)
-  .offset(8)
   .toSQL()
 
-console.log(query)
+console.log(queryBuilder)
