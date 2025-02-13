@@ -7,7 +7,7 @@ import type {
   OrderByType,
   Bindings,
   WhereCondition,
-  ICommonImpl,
+  IWhereImpl,
   SQLWithBindings,
   FromClause,
   WhereClause,
@@ -24,7 +24,7 @@ export interface QueryBuilderQueryDesc<T> {
   fromClauses?: FromClause[]
   whereClauses?: WhereClause<T>[]
 }
-class CommonMethods<T> implements ICommonImpl<T> {
+class CommonMethods<T> implements IWhereImpl<T> {
   protected whereClauses: WhereClause<T>[] = []
 
   where(conditions: WhereCondition<T>): this {

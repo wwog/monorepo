@@ -484,7 +484,10 @@ const convertToSQL = (optimizeResult: PreprocessResult): SQLWithBindings => {
   return [`WHERE ${andConditionsStr} OR ${orConditionsStr}`, allBindings]
 }
 
-export const whereUnit = (whereClauses: WhereClause[]): SQLWithBindings => {
+export const whereUnit = (whereClauses?: WhereClause[]): SQLWithBindings => {
+  if (whereClauses === undefined) {
+    return ['', []]
+  }
   const hasQuery = whereClauses.length > 0
   if (hasQuery === false) {
     return ['', []]

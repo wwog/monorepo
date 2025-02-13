@@ -2,15 +2,17 @@ export type Keyof<T> = keyof T & string
 export type Bindings = (string | number)[]
 export type SQLWithBindings = [string, Bindings]
 export interface SQLBuilder {
-  select(clause: SelectClause[]): SQLWithBindings
-  from(clause: FromClause[]): SQLWithBindings
-  where(clause: WhereClause[]): SQLWithBindings
-  groupBy(clause: GroupByClause[]): SQLWithBindings
-  orderBy(clause: OrderByClause[]): SQLWithBindings
-  offset(clause: number): SQLWithBindings
-  limit(clause: number): SQLWithBindings
+  select: (clauses?: SelectClause[]) => SQLWithBindings
+  from: (clauses?: FromClause[]) => SQLWithBindings
+  where: (clauses?: WhereClause[]) => SQLWithBindings
+  groupBy: (clauses?: GroupByClause[]) => SQLWithBindings
+  orderBy: (clauses?: OrderByClause[]) => SQLWithBindings
+  returning: (clauses?: ReturningClause[]) => SQLWithBindings
+  offset: (value?: number) => SQLWithBindings
+  limit: (value?: number) => SQLWithBindings
 }
 export type SelectColumn<T> = Keyof<T> | '*' | 'rowid'
+export type Column<T> = Keyof<T> | 'rowid'
 
 export interface QueryDescription<T> {
   selectClauses: SelectClause<T>[]
@@ -83,7 +85,6 @@ export type WhereCondition<T> = {
 
 export type WhereType = 'AND' | 'OR'
 export type OrderByType = 'ASC' | 'DESC'
-export type OrderByNulls = 'FIRST' | 'LAST'
 
 export interface Raw {
   sql: string
@@ -115,7 +116,6 @@ export interface OrderByClause<T = any> {
   rule?: {
     column: keyof T
     direction?: OrderByType
-    nulls?: OrderByNulls
   }
   raw?: Raw
 }
@@ -148,9 +148,14 @@ export interface GroupByClause<T = any> {
   }
   raw?: Raw
 }
+
+export interface ReturningClause<T = any> {
+  rule?: SelectColumn<T>
+  raw?: Raw
+}
 //#endregion
 
-export interface ICommonImpl<T> {
+export interface IWhereImpl<T> {
   /**
    * Specify the conditions for the 'WHERE' clause.
    * @param conditions The conditions to filter the query results.
@@ -184,48 +189,45 @@ export interface ICommonImpl<T> {
 }
 
 export interface IReturningImpl<T> {
-  returning(columns: Keyof<T> | Keyof<T>[]): this
-  returningRaw(raw: Raw): this
+  returning(col?: SelectColumn<T> | SelectColumn<T>[]): this
+  returningRaw(sql: string, bindings?: Bindings): this
 }
 
-export interface IOrderingImpl<T> {
+export interface IOrderByImpl<T> {
   /**
    * Specify the order of the results.
    * @param column The column to order by.
    * @param direction The direction to order by.
    * - 'ASC' for ascending order.
    * - 'DESC' for descending order.
-   * @param nulls The order of null values.
-   * - 'FIRST' for null values first.
-   * - 'LAST' for null values last.
    * @example
-   * const query = queryBuilder.select('*').from('table').orderBy('column1', 'ASC', 'LAST');
+   * const query = queryBuilder.select('*').from('table').orderBy('column1', 'ASC');
    */
-  orderBy(column: keyof T, direction?: OrderByType, nulls?: OrderByNulls): this
+  orderBy(column: Column<T>, direction?: OrderByType): this
   /**
    * Specify the order of the results using a raw SQL query.
    * @param sql The SQL query to execute.
    * @example
-   * const query = queryBuilder.select('*').from('table').orderByRaw('column1 ASC NULLS LAST');
+   * const query = queryBuilder.select('*').from('table').orderByRaw('column1 ASC');
    */
   orderByRaw(sql: string, bindings?: Bindings): this
 }
 
-export interface IGroupingImpl<T> {
+export interface IGroupByImpl<T> {
   /**
    * Specify the grouping of the results.
    * @param column The column to group by.
    * @example
    * const query = queryBuilder.select('*').from('table').groupBy('column1');
    */
-  groupBy(column: keyof T): ISelectMethods<T>
+  groupBy(column: Column<T>): this
   /**
    * Specify the grouping of the results using a raw SQL query.
    * @param sql The SQL query to execute.
    * @example
    * const query = queryBuilder.select('*').from('table').groupByRaw('column1');
    */
-  groupByRaw(sql: string, bindings?: Bindings): ISelectMethods<T>
+  groupByRaw(sql: string, bindings?: Bindings): this
 }
 
 export interface ILimitImpl {
@@ -238,22 +240,7 @@ export interface ILimitImpl {
   limit(limit: number): this
 }
 
-export interface ISelectMethods<T>
-  extends ICommonImpl<T>,
-    IOrderingImpl<T>,
-    IGroupingImpl<T>,
-    IReturningImpl<T>,
-    ILimitImpl {
-  /**
-   * Select columns from the query.
-   * @param columns The columns to select from the table.
-   * @example
-   * const query = queryBuilder.select(['column1', 'column2']);
-   * @example
-   * const query = queryBuilder.select('*');
-   * @default '*'
-   */
-  select(columns?: SelectColumn<T> | SelectColumn<T>[]): ISelectMethods<T>
+export interface IFromImpl {
   /**
    * From the table.
    * @param table The table to select from.
@@ -269,17 +256,36 @@ export interface ISelectMethods<T>
    * const query = queryBuilder.select('*').fromRaw('SELECT * FROM table WHERE column1 = ?', ['value']);
    */
   fromRaw(sql: string, bindings?: Bindings): this
+}
+
+export interface ISelectQuery<T>
+  extends IWhereImpl<T>,
+    IOrderByImpl<T>,
+    IGroupByImpl<T>,
+    ILimitImpl,
+    IFromImpl {
+  /**
+   * Select columns from the query.
+   * @param columns The columns to select from the table.
+   * @example
+   * const query = queryBuilder.select(['column1', 'column2']);
+   * @example
+   * const query = queryBuilder.select('*');
+   * @default '*'
+   */
+  select(columns?: SelectColumn<T> | SelectColumn<T>[]): ISelectQuery<T>
+
   /**
    * Specify the number of records to skip.
    * @param offset The number of records to skip before starting to return results.
    * @example
    * const query = queryBuilder.select('*').from('table').offset(10);
    */
-  offset(offset: number): ISelectMethods<T>
+  offset(offset: number): ISelectQuery<T>
 }
 
-export interface IUpdateMethods<T>
-  extends ICommonImpl<T>,
+export interface IUpdateQuery<T>
+  extends IWhereImpl<T>,
     IReturningImpl<T>,
     ILimitImpl {
   /**
@@ -289,7 +295,7 @@ export interface IUpdateMethods<T>
    * @example
    * const query = queryBuilder.update('users', { name: 'John' });
    */
-  update(table: string, values: Partial<T>): IUpdateMethods<T>
+  update(table: string, values: Partial<T>): IUpdateQuery<T>
   /**
    * Update records using raw SQL.
    * @param sql The SQL query to execute.
@@ -297,32 +303,20 @@ export interface IUpdateMethods<T>
    * @example
    * const query = queryBuilder.updateRaw('UPDATE users SET name = ?', ['John']);
    */
-  updateRaw(sql: string, bindings?: Bindings): IUpdateMethods<T>
+  updateRaw(sql: string, bindings?: Bindings): IUpdateQuery<T>
 }
 
-export interface IDeleteMethods<T>
-  extends ICommonImpl<T>,
+export interface IDeleteQuery<T>
+  extends IWhereImpl<T>,
     IReturningImpl<T>,
-    ILimitImpl {
-  /**
-   * From the table.
-   * @param table The table to select from.
-   * @example
-   */
-  from(table: string): this
-  /**
-   * From the result of a raw SQL query.
-   * @param sql The SQL query to execute.
-   * @param bindings The binding parameters for the SQL query.
-   * @example
-   */
-  fromRaw(sql: string, bindings?: Bindings): this
+    ILimitImpl,
+    IFromImpl {
   /**
    * Delete records from the table.
    * @example
    * const query = queryBuilder.delete();
    */
-  delete(): IDeleteMethods<T>
+  delete(): IDeleteQuery<T>
   /**
    * Delete records using raw SQL.
    * @param sql The SQL query to execute.
@@ -330,10 +324,10 @@ export interface IDeleteMethods<T>
    * @example
    * const query = queryBuilder.deleteRaw('DELETE FROM users WHERE id = ?', [1]);
    */
-  deleteRaw(sql: string, bindings?: Bindings): IDeleteMethods<T>
+  deleteRaw(sql: string, bindings?: Bindings): IDeleteQuery<T>
 }
 
-export interface IInsertMethods<T> extends ICommonImpl<T>, IReturningImpl<T> {
+export interface IInsertQuery<T> extends IWhereImpl<T>, IReturningImpl<T> {
   /**
    * Insert records into the table.
    * @param table The table to insert into.
@@ -341,7 +335,7 @@ export interface IInsertMethods<T> extends ICommonImpl<T>, IReturningImpl<T> {
    * @example
    * const query = queryBuilder.insert('users', { name: 'John', age: 25 });
    */
-  insert(table: string, values: Partial<T> | Partial<T>[]): IInsertMethods<T>
+  insert(table: string, values: Partial<T> | Partial<T>[]): IInsertQuery<T>
   /**
    * Insert records using raw SQL.
    * @param sql The SQL query to execute.
@@ -349,5 +343,5 @@ export interface IInsertMethods<T> extends ICommonImpl<T>, IReturningImpl<T> {
    * @example
    * const query = queryBuilder.insertRaw('INSERT INTO users (name, age) VALUES (?, ?)', ['John', 25]);
    */
-  insertRaw(sql: string, bindings?: Bindings): IInsertMethods<T>
+  insertRaw(sql: string, bindings?: Bindings): IInsertQuery<T>
 }

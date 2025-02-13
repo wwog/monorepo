@@ -25,8 +25,10 @@ function validateNulls(nulls?: string) {
   }
 }
 
-export const orderUnit = (orderByClauses: OrderByClause[]): SQLWithBindings => {
-  if (orderByClauses.length === 0) {
+export const orderUnit = (
+  orderByClauses?: OrderByClause[],
+): SQLWithBindings => {
+  if (orderByClauses === undefined || orderByClauses.length === 0) {
     return ['', []]
   }
 

@@ -5,8 +5,10 @@ import type {
 } from '../../types/query.type'
 import { quotes, validateBindings } from '../../utils'
 
-export const groupUnit = (groupByClauses: GroupByClause[]): SQLWithBindings => {
-  if (groupByClauses.length === 0) {
+export const groupUnit = (
+  groupByClauses?: GroupByClause[],
+): SQLWithBindings => {
+  if (groupByClauses === undefined || groupByClauses.length === 0) {
     return ['', []]
   }
 

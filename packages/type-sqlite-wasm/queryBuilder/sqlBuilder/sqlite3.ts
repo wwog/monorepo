@@ -6,6 +6,7 @@ import type {
   GroupByClause,
   OrderByClause,
   SQLBuilder,
+  ReturningClause,
 } from '../types/query.type'
 import { fromUnit } from './units/from'
 import { selectUnit } from './units/select'
@@ -14,27 +15,31 @@ import { groupUnit } from './units/group'
 import { orderUnit } from './units/order'
 import { offsetUnit } from './units/offset'
 import { limitUnit } from './units/limit'
+import { returningUnit } from './units/returning'
 
 export const Sqlite3SQLBuilder: SQLBuilder = {
-  select: (clause: SelectClause[]): SQLWithBindings => {
-    return selectUnit(clause)
+  select: (clauses?: SelectClause[]): SQLWithBindings => {
+    return selectUnit(clauses)
   },
-  from: (clause: FromClause[]): SQLWithBindings => {
-    return fromUnit(clause)
+  from: (clauses?: FromClause[]): SQLWithBindings => {
+    return fromUnit(clauses)
   },
-  where: (clause: WhereClause[]): SQLWithBindings => {
-    return whereUnit(clause)
+  where: (clauses?: WhereClause[]): SQLWithBindings => {
+    return whereUnit(clauses)
   },
-  groupBy: (clause: GroupByClause[]): SQLWithBindings => {
-    return groupUnit(clause)
+  groupBy: (clauses?: GroupByClause[]): SQLWithBindings => {
+    return groupUnit(clauses)
   },
-  orderBy: (clause: OrderByClause[]): SQLWithBindings => {
-    return orderUnit(clause)
+  orderBy: (clauses?: OrderByClause[]): SQLWithBindings => {
+    return orderUnit(clauses)
   },
-  offset: (clause: number): SQLWithBindings => {
-    return offsetUnit(clause)
+  offset: (value?: number): SQLWithBindings => {
+    return offsetUnit(value)
   },
-  limit: (clause: number): SQLWithBindings => {
-    return limitUnit(clause)
+  limit: (value?: number): SQLWithBindings => {
+    return limitUnit(value)
+  },
+  returning: (clauses?: ReturningClause[]): SQLWithBindings => {
+    return returningUnit(clauses)
   },
 }

@@ -1,8 +1,8 @@
 import type { FromClause, SQLWithBindings } from '../../types/query.type'
 import { bracket, quotes, validateBindings } from '../../utils'
 
-export const fromUnit = (fromClauses: FromClause[]): SQLWithBindings => {
-  if (fromClauses.length === 0) {
+export const fromUnit = (fromClauses?: FromClause[]): SQLWithBindings => {
+  if (fromClauses === undefined || fromClauses.length === 0) {
     throw new Error('FROM clause is required')
   }
   if (fromClauses.length > 1) {
