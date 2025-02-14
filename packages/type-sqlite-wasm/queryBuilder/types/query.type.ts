@@ -15,6 +15,7 @@ export interface SQLBuilder {
 }
 export type SelectColumn<T> = Keyof<T> | '*' | 'rowid'
 export type Column<T> = Keyof<T> | 'rowid'
+export type NoRowIdColumn<T> = Keyof<T>
 
 export interface QueryDescription<T> {
   selectClauses: SelectClause<T>[]
@@ -345,21 +346,83 @@ export interface IDeleteQuery<T>
   delete(): IDeleteQuery<T>
 }
 
-export interface IInsertQuery<T> extends IWhereImpl<T>, IReturningImpl<T> {
+export interface IInsertQuery<T> extends IReturningImpl<T> {
   /**
    * Insert records into the table.
    * @param table The table to insert into.
    * @param values The values to insert.
    * @example
-   * const query = queryBuilder.insert('users', { name: 'John', age: 25 });
+   * const query = queryBuilder.insert('users');
    */
-  insert(table: string, values: Partial<T> | Partial<T>[]): IInsertQuery<T>
+  insert(tableName: string): IInsertQuery<T>
   /**
-   * Insert records using raw SQL.
-   * @param sql The SQL query to execute.
-   * @param bindings The binding parameters for the SQL query.
+   * Insert values into the table.
+   * @param values The values to insert.
    * @example
-   * const query = queryBuilder.insertRaw('INSERT INTO users (name, age) VALUES (?, ?)', ['John', 25]);
+   * const query = queryBuilder.insert('users').values({ name: 'John', age: 25 });
    */
-  insertRaw(sql: string, bindings?: Bindings): IInsertQuery<T>
+  values(values: Partial<T> | Partial<T>[]): IInsertQuery<T>
+  /**
+   * Specify the target column for the on conflict clause.
+   * @param targetColumn The column to target for the on conflict clause.
+   * @description
+   * Because omitting conflict_target causes SQLite to check all uniqueness constraints, there may be a performance overhead in some cases.
+   * If you know that conflicts will only occur on certain columns, it is best to specify those columns explicitly to increase efficiency.
+   * @example
+   * const query = queryBuilder.insert('users').values({ name: 'John', age: 25 }).onConflict('name').doUpdate({ age: 26 });
+   */
+  onConflict(targetColumn?: NoRowIdColumn<T>): IInsertQuery<T>
+  /**
+   * Specify the action to take if a conflict occurs.
+   * @since sqlite3.24 like `ignore`
+   * @example
+   * const query = queryBuilder.insert('users').values({ name: 'John', age: 25 }).onConflict('name').doNothing();
+   */
+  doNothing(): IInsertQuery<T>
+  /**
+   * Specify the action to take if a conflict occurs.
+   * @since sqlite3.24
+   * @example
+   * const query = queryBuilder.insert('users').values({ name: 'John', age: 25 }).onConflict('name').doUpdate({
+   *  excluded:{name:"excluded.name"},
+   *  merge:{age:26}
+   * });
+   */
+  doUpdate(value: {
+    excluded?: DoUpdateExcludeValues<T>
+    merge?: Partial<T>
+  }): IInsertQuery<T>
+  /**
+   * Action: When a conflict occurs, the transaction is rolled back to the previous savepoint and the current transaction is terminated.
+   * Usage scenarios: Typically used in scenarios where transactional integrity needs to be ensured. If a conflict occurs, the entire transaction will be undone.
+   */
+  rollback(): IInsertQuery<T>
+  /**
+   * Action: When a conflict occurs, the current statement is aborted, but the transaction is not rolled back.
+   * The operation already performed is still valid.
+   * Usage scenario: This is the default behavior of SQLite and is suitable for most situations.
+   */
+  abort(): IInsertQuery<T>
+  /**
+   * Action: When a conflict occurs, the current statement is aborted, but the previous operation is not rolled back.
+   * Difference from ABORT: FAIL does not roll back some operations of the current statement, whereas ABORT rolls back all operations of the current statement.
+   */
+  fail(): IInsertQuery<T>
+  /**
+   * Action: When a conflict occurs, the operation is ignored.
+   * Usage scenario: This is suitable for scenarios where conflicts are expected and should be handled gracefully.
+   */
+  ignore(): IInsertQuery<T>
+  /**
+   * Action: When a conflict occurs, the old record is deleted and a new record is inserted.
+   * Use case: For situations where you want to replace existing records in the event of a conflict.
+   */
+  replace(): IInsertQuery<T>
 }
+
+export type PrefixExcludeValue<T> =
+  `excluded.${Exclude<keyof T, 'rowid'> & string}`
+
+export type DoUpdateExcludeValues<T> = Partial<{
+  [K in keyof T]: PrefixExcludeValue<T>
+}>

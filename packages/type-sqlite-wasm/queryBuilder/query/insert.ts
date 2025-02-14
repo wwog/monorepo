@@ -2,16 +2,22 @@ import {
   type IInsertQuery,
   type Bindings,
   type SelectColumn,
-  type WhereCondition,
   type SQLWithBindings,
-  type InsertClause,
   BaseQuery,
   type QueryOptions,
+  type NoRowIdColumn,
+  type DoUpdateExcludeValues,
 } from '../types/query.type'
+import { equalStr, spaceLeft, spaceRight } from '../utils'
 import { ReturningMixin, WhereMixin } from './mixin'
 
 export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
-  protected insertClauses: InsertClause<T>[] = []
+  protected _tableName?: string
+  protected _values: Partial<T>[] = []
+  protected _callOnConflict = false
+  protected _onConflictColumns: string[] = []
+  protected _onConflictClause?: string
+  protected _onConflictBindings: Bindings = []
   // Mixins
   protected whereMixin: WhereMixin<T>
   protected returningMixin: ReturningMixin<T>
@@ -22,43 +28,108 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     this.returningMixin = new ReturningMixin(this.sqlBuilder)
   }
 
-  insert(table: string, values: Partial<T> | Partial<T>[]): this {
-    this.insertClauses.push({
-      rule: {
-        table,
-        values,
-      },
-    })
+  insert(tableName: string) {
+    if (tableName.trim() === '') {
+      throw new Error('Table name is required')
+    }
+    this._tableName = tableName
     return this
   }
 
-  insertRaw(sql: string, bindings?: Bindings): this {
-    this.insertClauses.push({
-      raw: {
-        sql,
-        bindings,
-      },
-    })
+  values(data: Partial<T> | Partial<T>[]): this {
+    if (Array.isArray(data)) {
+      this._values.push(...data)
+    } else {
+      this._values.push(data)
+    }
+
     return this
   }
 
-  where(conditions: WhereCondition<T>): this {
-    this.whereMixin.where(conditions)
+  onConflict(column?: NoRowIdColumn<T>): this {
+    this._callOnConflict = true
+    if (column) {
+      this._onConflictColumns.push(column)
+    }
     return this
   }
 
-  orWhere(conditions: WhereCondition<T>): this {
-    this.whereMixin.orWhere(conditions)
+  doNothing(): this {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+    this._onConflictClause = 'DO NOTHING'
     return this
   }
 
-  whereRaw(sql: string, bindings?: Bindings): this {
-    this.whereMixin.whereRaw(sql, bindings)
+  doUpdate(value: {
+    excluded?: DoUpdateExcludeValues<T>
+    merge?: Partial<T>
+  }): this {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+
+    const allValues = {
+      ...value.excluded,
+      ...value.merge,
+    }
+
+    let sql = 'DO UPDATE SET'
+    const bindings: Bindings = []
+
+    if (Object.keys(allValues).length === 0) {
+      throw new Error('No values to update')
+    }
+
+    for (const [key, value] of Object.entries(allValues)) {
+      sql += spaceLeft(equalStr(key, value as string))
+      bindings.push(value as string | number)
+    }
+
+    this._onConflictClause = sql
+    this._onConflictBindings = bindings
+
     return this
   }
 
-  orWhereRaw(sql: string, bindings?: Bindings): this {
-    this.whereMixin.orWhereRaw(sql, bindings)
+  rollback(): IInsertQuery<T> {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+    this._onConflictClause = 'ROLLBACK'
+    return this
+  }
+
+  abort(): IInsertQuery<T> {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+    this._onConflictClause = 'ABORT'
+    return this
+  }
+
+  fail(): IInsertQuery<T> {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+    this._onConflictClause = 'FAIL'
+    return this
+  }
+
+  ignore(): IInsertQuery<T> {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+    this._onConflictClause = 'IGNORE'
+    return this
+  }
+
+  replace(): IInsertQuery<T> {
+    if (this._onConflictClause) {
+      throw new Error('On conflict clause already set')
+    }
+    this._onConflictClause = 'REPLACE'
     return this
   }
 
@@ -73,33 +144,41 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
   }
 
   toSQL(): SQLWithBindings {
-    let sql = ''
-    let bindings: Bindings = []
+    if (!this._tableName) {
+      throw new Error('Table name is required')
+    }
 
+    if (this._values.length === 0) {
+      throw new Error('No values to insert')
+    }
+
+    let sql = 'INSERT INTO'
+    const bindings: Bindings = []
     const pushResult = (result: SQLWithBindings) => {
       const noSpaceResult = result[0].trim()
+
       if (noSpaceResult !== '') {
         if (sql !== '') {
-          sql += ' '
+          sql = spaceRight(sql)
         }
         sql += noSpaceResult
         bindings.push(...result[1])
       }
     }
-    // Process INSERT
-    pushResult(this.sqlBuilder.insert(this.insertClauses))
-
-    // Add WHERE clause if exists
-    pushResult(this.whereMixin.toSQL())
-
-    // Add RETURNING clause if exists
-    pushResult(this.returningMixin.toSQL())
-
-    if (sql === '') {
-      throw new Error('No valid SQL generated')
+    pushResult([this._tableName, []])
+    pushResult(
+      this.sqlBuilder.insert([
+        {
+          rule: {
+            table: this._tableName,
+            values: this._values,
+          },
+        },
+      ]),
+    )
+    if (this._callOnConflict) {
     }
 
-    sql += ';'
     return [sql, bindings]
   }
 }

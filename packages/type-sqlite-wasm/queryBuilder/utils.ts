@@ -4,6 +4,22 @@ import type {
   WhereConditionDescription,
 } from './types/query.type'
 
+export function equalStr(a: string, b: string): string {
+  return `${a} = ${b}`
+}
+
+export function spaceRight(str: string): string {
+  return `${str} `
+}
+
+export function spaceLeft(str: string): string {
+  return ` ${str}`
+}
+
+export function space(str: string): string {
+  return ` ${str} `
+}
+
 export function quotes(str: string): string {
   return `"${str}"`
 }
