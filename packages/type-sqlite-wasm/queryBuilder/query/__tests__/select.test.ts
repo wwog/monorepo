@@ -16,21 +16,21 @@ describe('SelectQuery', () => {
       sqlBuilder: Sqlite3SQLBuilder,
     })
 
-  test('基本查询', () => {
+  test('Basic query', () => {
     const query = createQuery().select(['id', 'name']).from('users').toSQL()
 
     expect(query[0]).toBe('SELECT "id", "name" FROM "users";')
     expect(query[1]).toEqual([])
   })
 
-  test('查询所有列', () => {
+  test('Query all columns', () => {
     const query = createQuery().select('*').from('users').toSQL()
 
     expect(query[0]).toBe('SELECT * FROM "users";')
     expect(query[1]).toEqual([])
   })
 
-  test('带条件的查询', () => {
+  test('Query with conditions', () => {
     const query = createQuery()
       .select(['name', 'age'])
       .from('users')
@@ -41,7 +41,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual([18])
   })
 
-  test('复杂条件查询', () => {
+  test('Query with complex conditions', () => {
     const query = createQuery()
       .select(['name', 'department'])
       .from('users')
@@ -58,7 +58,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual([20, 'IT', 50000])
   })
 
-  test('带排序的查询', () => {
+  test('Query with ordering', () => {
     const query = createQuery()
       .select(['name', 'age'])
       .from('users')
@@ -71,7 +71,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual([])
   })
 
-  test('带分组的查询', () => {
+  test('Query with grouping', () => {
     const query = createQuery()
       .select(['department'])
       .from('users')
@@ -84,7 +84,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual([])
   })
 
-  test('带限制和偏移的查询', () => {
+  test('Query with limit and offset', () => {
     const query = createQuery()
       .select(['name'])
       .from('users')
@@ -99,7 +99,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual([10, 20])
   })
 
-  test('OR条件查询', () => {
+  test('Query with OR conditions', () => {
     const query = createQuery()
       .select(['name'])
       .from('users')
@@ -113,7 +113,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual([20, 'HR'])
   })
 
-  test('Raw SQL查询', () => {
+  test('Raw SQL query', () => {
     const query = createQuery()
       .select(['name'])
       .fromRaw('(SELECT * FROM users WHERE active = ?) AS u', ['true'])
@@ -127,19 +127,19 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual(['true', 25, 'IT'])
   })
 
-  test('默认查询所有列', () => {
+  test('Default query all columns', () => {
     const query = createQuery().from('users').toSQL()
 
     expect(query[0]).toBe('SELECT * FROM "users";')
     expect(query[1]).toEqual([])
   })
 
-  test('错误处理 - 无FROM子句', () => {
+  test('Error handling - No FROM clause', () => {
     const query = createQuery()
     expect(() => query.toSQL()).toThrow('FROM clause is required')
   })
 
-  test('复杂组合查询', () => {
+  test('Complex combined query', () => {
     const query = createQuery()
       .select(['name', 'department', 'salary'])
       .from('users')
@@ -156,7 +156,7 @@ describe('SelectQuery', () => {
     expect(query[1]).toEqual(['active', 5, 10])
   })
 
-  test('多个排序条件', () => {
+  test('Multiple order conditions', () => {
     const query = createQuery()
       .select(['name'])
       .from('users')

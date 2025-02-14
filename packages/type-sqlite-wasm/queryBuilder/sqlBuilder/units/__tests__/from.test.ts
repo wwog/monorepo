@@ -3,13 +3,13 @@ import type { FromClause } from '../../../types/query.type'
 import { describe, expect, test } from 'vitest'
 
 describe('fromUnit', () => {
-  test('应该正确处理简单表名', () => {
+  test('Should handle simple table name correctly', () => {
     const input: FromClause[] = [{ rule: 'users' }]
     const expected: [string, any[]] = ['FROM "users"', []]
     expect(fromUnit(input)).toEqual(expected)
   })
 
-  test('应该正确处理带绑定值的Raw SQL', () => {
+  test('Should handle Raw SQL with bindings correctly', () => {
     const input: FromClause[] = [
       {
         raw: {
@@ -25,7 +25,7 @@ describe('fromUnit', () => {
     expect(fromUnit(input)).toEqual(expected)
   })
 
-  test('应该正确处理无绑定值的Raw SQL', () => {
+  test('Should handle Raw SQL without bindings correctly', () => {
     const input: FromClause[] = [
       {
         raw: {
@@ -40,42 +40,42 @@ describe('fromUnit', () => {
     expect(fromUnit(input)).toEqual(expected)
   })
 
-  test('空FROM子句应该抛出错误', () => {
+  test('Empty FROM clause should throw error', () => {
     expect(() => fromUnit([])).toThrow('FROM clause is required')
   })
 
-  test('多个FROM子句应该抛出错误', () => {
+  test('Multiple FROM clauses should throw error', () => {
     const input: FromClause[] = [{ rule: 'users' }, { rule: 'profiles' }]
     expect(() => fromUnit(input)).toThrow(
       'Multiple FROM clauses are not supported',
     )
   })
 
-  test('绑定值数量少于占位符时应该抛出错误', () => {
+  test('Should throw error when bindings count is less than placeholders', () => {
     const input: FromClause[] = [
       {
         raw: {
           sql: 'users JOIN profiles ON users.id = ? AND profiles.status = ?',
-          bindings: [1], // 只提供了一个绑定值，但SQL中有两个占位符
+          bindings: [1], // Only one binding provided but SQL has two placeholders
         },
       },
     ]
     expect(() => fromUnit(input)).toThrow(/SQL binding count mismatch/)
   })
 
-  test('绑定值数量多于占位符时应该抛出错误', () => {
+  test('Should throw error when bindings count is more than placeholders', () => {
     const input: FromClause[] = [
       {
         raw: {
           sql: 'users JOIN profiles ON users.id = ?',
-          bindings: [1, 2, 3], // 提供了三个绑定值，但SQL中只有一个占位符
+          bindings: [1, 2, 3], // Three bindings provided but SQL has only one placeholder
         },
       },
     ]
     expect(() => fromUnit(input)).toThrow(/SQL binding count mismatch/)
   })
 
-  test('LIKE条件中的问号不应被视为占位符', () => {
+  test('Question mark in LIKE condition should not be treated as placeholder', () => {
     const input: FromClause[] = [
       {
         raw: {

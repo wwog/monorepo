@@ -3,11 +3,11 @@ import type { InsertClause } from '../../../types/query.type'
 import { describe, expect, test } from 'vitest'
 
 describe('insertUnit', () => {
-  test('空INSERT子句', () => {
+  test('Empty INSERT clause', () => {
     expect(() => insertUnit()).toThrow('No INSERT clause provided')
   })
 
-  test('单行插入', () => {
+  test('Single row insert', () => {
     const clauses: InsertClause[] = [
       {
         rule: {
@@ -21,7 +21,7 @@ describe('insertUnit', () => {
     expect(result[1]).toEqual([25, 'John'])
   })
 
-  test('多行插入', () => {
+  test('Multiple rows insert', () => {
     const clauses: InsertClause[] = [
       {
         rule: {
@@ -40,7 +40,7 @@ describe('insertUnit', () => {
     expect(result[1]).toEqual([25, 'John', 23, 'Jane'])
   })
 
-  test('Raw SQL插入', () => {
+  test('Raw SQL insert', () => {
     const clauses: InsertClause[] = [
       {
         raw: {
@@ -54,7 +54,7 @@ describe('insertUnit', () => {
     expect(result[1]).toEqual(['John', 25])
   })
 
-  test('多行插入 - 不同列数', () => {
+  test('Multiple rows insert - Different column counts', () => {
     const clauses: InsertClause[] = [
       {
         rule: {
@@ -73,7 +73,7 @@ describe('insertUnit', () => {
     expect(result[1]).toEqual([25, 'John', 'admin', 23, 'Jane'])
   })
 
-  test('错误处理 - 多个INSERT子句', () => {
+  test('Error handling - Multiple INSERT clauses', () => {
     const clauses: InsertClause[] = [
       {
         rule: {
@@ -93,7 +93,7 @@ describe('insertUnit', () => {
     )
   })
 
-  test('错误处理 - 空值对象', () => {
+  test('Error handling - Empty values object', () => {
     const clauses: InsertClause[] = [
       {
         rule: {
@@ -105,7 +105,7 @@ describe('insertUnit', () => {
     expect(() => insertUnit(clauses)).toThrow('No columns provided for INSERT')
   })
 
-  test('错误处理 - 空值数组', () => {
+  test('Error handling - Empty values array', () => {
     const clauses: InsertClause[] = [
       {
         rule: {
@@ -117,12 +117,12 @@ describe('insertUnit', () => {
     expect(() => insertUnit(clauses)).toThrow('No values provided for INSERT')
   })
 
-  test('错误处理 - 绑定值数量不匹配', () => {
+  test('Error handling - Binding count mismatch', () => {
     const clauses: InsertClause[] = [
       {
         raw: {
           sql: 'INSERT INTO users (name, age) VALUES (?, ?)',
-          bindings: ['John'], // 只提供了一个绑定值，但SQL中有两个占位符
+          bindings: ['John'], // Only one binding provided but SQL has two placeholders
         },
       },
     ]

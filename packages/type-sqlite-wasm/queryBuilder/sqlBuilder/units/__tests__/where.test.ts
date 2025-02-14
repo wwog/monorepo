@@ -3,12 +3,12 @@ import type { WhereClause } from '../../../types/query.type'
 import { describe, expect, test } from 'vitest'
 
 describe('whereUnit', () => {
-  test('空WHERE子句', () => {
+  test('Empty WHERE clause', () => {
     const result = whereUnit()
     expect(result).toEqual(['', []])
   })
 
-  test('基本等于条件', () => {
+  test('Basic equals condition', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -22,7 +22,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([1])
   })
 
-  test('多个AND条件', () => {
+  test('Multiple AND conditions', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -39,7 +39,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([18, 'active'])
   })
 
-  test('OR条件', () => {
+  test('OR conditions', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -56,7 +56,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual(['pending', 20])
   })
 
-  test('复合条件 - AND和OR组合', () => {
+  test('Compound conditions - AND and OR combined', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -79,7 +79,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([18, 'active', 'admin'])
   })
 
-  test('比较操作符', () => {
+  test('Comparison operators', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -101,7 +101,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([18, 60, 5, 100, 'inactive'])
   })
 
-  test('LIKE操作符', () => {
+  test('LIKE operators', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -118,7 +118,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual(['John%', '%@example.com'])
   })
 
-  test('IN操作符', () => {
+  test('IN operators', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -137,7 +137,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual(['active', 'pending', 'deleted', 'archived'])
   })
 
-  test('NULL操作符', () => {
+  test('NULL operators', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -154,7 +154,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([])
   })
 
-  test('BETWEEN操作符', () => {
+  test('BETWEEN operators', () => {
     const clauses: WhereClause[] = [
       {
         rule: {
@@ -173,7 +173,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([18, 30, 0, 60])
   })
 
-  test('Raw SQL条件', () => {
+  test('Raw SQL conditions', () => {
     const clauses: WhereClause[] = [
       {
         raw: {
@@ -188,7 +188,7 @@ describe('whereUnit', () => {
     expect(result[1]).toEqual([30])
   })
 
-  test('Raw SQL与规则条件组合', () => {
+  test('Raw SQL combined with rule conditions', () => {
     const clauses: WhereClause[] = [
       {
         rule: {

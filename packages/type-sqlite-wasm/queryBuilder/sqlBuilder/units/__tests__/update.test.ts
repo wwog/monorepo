@@ -9,12 +9,12 @@ describe('updateUnit', () => {
     expected: [string, any[]]
   }> = [
     {
-      name: '空UPDATE子句',
+      name: 'Empty UPDATE clause',
       input: [],
       expected: ['', []],
     },
     {
-      name: '基本更新',
+      name: 'Basic update',
       input: [
         {
           rule: {
@@ -26,7 +26,7 @@ describe('updateUnit', () => {
       expected: ['UPDATE "users" SET "age" = ?, "name" = ?', [25, 'John']],
     },
     {
-      name: '单列更新',
+      name: 'Single column update',
       input: [
         {
           rule: {
@@ -38,7 +38,7 @@ describe('updateUnit', () => {
       expected: ['UPDATE "users" SET "status" = ?', ['active']],
     },
     {
-      name: 'Raw SQL更新',
+      name: 'Raw SQL update',
       input: [
         {
           raw: {
@@ -49,7 +49,7 @@ describe('updateUnit', () => {
       expected: ['UPDATE users SET last_login = CURRENT_TIMESTAMP', []],
     },
     {
-      name: 'Raw SQL带绑定值',
+      name: 'Raw SQL with bindings',
       input: [
         {
           raw: {
@@ -69,7 +69,7 @@ describe('updateUnit', () => {
     })
   })
 
-  test('错误处理 - 多个UPDATE子句', () => {
+  test('Error handling - Multiple UPDATE clauses', () => {
     const input: UpdateClause[] = [
       {
         rule: {
@@ -89,7 +89,7 @@ describe('updateUnit', () => {
     )
   })
 
-  test('错误处理 - 空值对象', () => {
+  test('Error handling - Empty values object', () => {
     const input: UpdateClause[] = [
       {
         rule: {
@@ -101,12 +101,12 @@ describe('updateUnit', () => {
     expect(() => updateUnit(input)).toThrow('No columns provided for UPDATE')
   })
 
-  test('错误处理 - 绑定值数量不匹配', () => {
+  test('Error handling - Binding count mismatch', () => {
     const input: UpdateClause[] = [
       {
         raw: {
           sql: 'UPDATE users SET name = ?, age = ?',
-          bindings: ['John'], // 只提供了一个绑定值，但SQL中有两个占位符
+          bindings: ['John'], // Only one binding provided but SQL has two placeholders
         },
       },
     ]

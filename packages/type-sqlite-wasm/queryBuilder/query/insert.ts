@@ -112,8 +112,6 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     this._onConflictClause = sql
 
     this._onConflictBindings = bindings
-    console.log(this._onConflictClause)
-    console.log(this._onConflictBindings)
     return this
   }
 

@@ -2,7 +2,7 @@ import { validateBindings } from '../utils'
 import { describe, expect, test } from 'vitest'
 
 describe('validateBindings', () => {
-  test('正确的绑定数量', () => {
+  test('Correct binding count', () => {
     expect(() =>
       validateBindings(['SELECT * FROM users WHERE id = ?', [1]]),
     ).not.toThrow()
@@ -14,23 +14,23 @@ describe('validateBindings', () => {
     ).not.toThrow()
   })
 
-  test('没有绑定值的SQL', () => {
+  test('SQL without bindings', () => {
     expect(() => validateBindings(['SELECT * FROM users', []])).not.toThrow()
   })
 
-  test('绑定值不足', () => {
+  test('Insufficient bindings', () => {
     expect(() =>
       validateBindings(['SELECT * FROM users WHERE id = ? AND age > ?', [1]]),
     ).toThrow(/SQL binding count mismatch/)
   })
 
-  test('绑定值过多', () => {
+  test('Too many bindings', () => {
     expect(() =>
       validateBindings(['SELECT * FROM users WHERE id = ?', [1, 2]]),
     ).toThrow(/SQL binding count mismatch/)
   })
 
-  test('LIKE条件使用单引号', () => {
+  test('LIKE condition using single quotes', () => {
     expect(() =>
       validateBindings([
         "SELECT * FROM users WHERE name LIKE '%?%' AND id = ?",
@@ -39,7 +39,7 @@ describe('validateBindings', () => {
     ).toThrow()
   })
 
-  test('复杂SQL语句', () => {
+  test('Complex SQL statement', () => {
     const sql = `
       SELECT * FROM users 
       WHERE name LIKE ? 

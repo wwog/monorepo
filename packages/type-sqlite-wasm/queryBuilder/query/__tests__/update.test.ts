@@ -14,7 +14,7 @@ describe('UpdateQuery', () => {
       sqlBuilder: Sqlite3SQLBuilder,
     })
 
-  test('基本更新', () => {
+  test('Basic update', () => {
     const query = createQuery()
       .update('users', { name: 'John', age: 25 })
       .toSQL()
@@ -23,7 +23,7 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual([25, 'John'])
   })
 
-  test('带条件的更新', () => {
+  test('Update with conditions', () => {
     const query = createQuery()
       .update('users', { status: 'active' })
       .where({ id: 1 })
@@ -33,7 +33,7 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual(['active', 1])
   })
 
-  test('带返回值的更新', () => {
+  test('Update with returning values', () => {
     const query = createQuery()
       .update('users', { name: 'John' })
       .returning(['id', 'created_at'])
@@ -45,7 +45,7 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual(['John'])
   })
 
-  test('带限制的更新', () => {
+  test('Update with limit', () => {
     const query = createQuery()
       .update('users', { status: 'inactive' })
       .where({ age: { $lt: 18 } })
@@ -58,7 +58,7 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual(['inactive', 18, 10])
   })
 
-  test('复杂条件更新', () => {
+  test('Update with complex conditions', () => {
     const query = createQuery()
       .update('users', { status: 'active' })
       .where({
@@ -74,7 +74,7 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual(['active', 18, 'pending'])
   })
 
-  test('Raw SQL更新', () => {
+  test('Raw SQL update', () => {
     const query = createQuery()
       .updateRaw('UPDATE users SET last_login = CURRENT_TIMESTAMP')
       .where({ id: 1 })
@@ -86,12 +86,12 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual([1])
   })
 
-  test('错误处理 - 无UPDATE子句', () => {
+  test('Error handling - No UPDATE clause', () => {
     const query = createQuery()
     expect(() => query.toSQL()).toThrow('No valid SQL generated')
   })
 
-  test('错误处理 - 多个UPDATE子句', () => {
+  test('Error handling - Multiple UPDATE clauses', () => {
     const query = createQuery()
     expect(() =>
       query
@@ -101,7 +101,7 @@ describe('UpdateQuery', () => {
     ).toThrow('Multiple UPDATE clauses are not supported')
   })
 
-  test('带排序的更新', () => {
+  test('Update with ordering', () => {
     const query = createQuery()
       .update('users', { status: 'active' })
       .orderBy('name', 'ASC')
@@ -114,7 +114,7 @@ describe('UpdateQuery', () => {
     expect(query[1]).toEqual(['active', 10])
   })
 
-  test('带原始SQL排序的更新', () => {
+  test('Update with raw SQL ordering', () => {
     const query = createQuery()
       .update('users', { status: 'active' })
       .orderByRaw('RANDOM()')

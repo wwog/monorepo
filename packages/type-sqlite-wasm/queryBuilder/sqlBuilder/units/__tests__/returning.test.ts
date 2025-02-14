@@ -9,27 +9,27 @@ describe('returningUnit', () => {
     expected: [string, any[]]
   }> = [
     {
-      name: '空RETURNING子句',
+      name: 'Empty RETURNING clause',
       input: [],
       expected: ['', []],
     },
     {
-      name: '返回所有列',
+      name: 'Return all columns',
       input: [{ rule: '*' }],
       expected: ['RETURNING *', []],
     },
     {
-      name: '返回单个列',
+      name: 'Return single column',
       input: [{ rule: 'id' }],
       expected: ['RETURNING "id"', []],
     },
     {
-      name: '返回多个列',
+      name: 'Return multiple columns',
       input: [{ rule: 'id' }, { rule: 'name' }],
       expected: ['RETURNING "id", "name"', []],
     },
     {
-      name: 'Raw SQL返回',
+      name: 'Raw SQL returning',
       input: [
         {
           raw: {
@@ -40,7 +40,7 @@ describe('returningUnit', () => {
       expected: ['RETURNING COUNT(*) as count', []],
     },
     {
-      name: 'Raw SQL带绑定值',
+      name: 'Raw SQL with bindings',
       input: [
         {
           raw: {
@@ -55,7 +55,7 @@ describe('returningUnit', () => {
       ],
     },
     {
-      name: '混合规则和Raw SQL',
+      name: 'Mixed rules and Raw SQL',
       input: [
         { rule: 'id' },
         {
@@ -75,12 +75,12 @@ describe('returningUnit', () => {
     })
   })
 
-  test('错误处理 - 绑定值数量不匹配', () => {
+  test('Error handling - Binding count mismatch', () => {
     const input: ReturningClause[] = [
       {
         raw: {
           sql: 'CASE WHEN id = ? THEN ? ELSE ? END',
-          bindings: [1, 'active'], // 只提供了两个绑定值，但SQL中有三个占位符
+          bindings: [1, 'active'], // Only provided two bindings but SQL has three placeholders
         },
       },
     ]

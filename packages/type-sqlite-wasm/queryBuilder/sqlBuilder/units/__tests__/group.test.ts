@@ -9,17 +9,17 @@ describe('groupUnit', () => {
     expected: [string, any[]]
   }> = [
     {
-      name: '空GROUP BY子句',
+      name: 'Empty GROUP BY clause',
       input: [],
       expected: ['', []],
     },
     {
-      name: '单列GROUP BY',
+      name: 'Single column GROUP BY',
       input: [{ rule: { column: 'name' } }],
       expected: ['GROUP BY "name"', []],
     },
     {
-      name: '多列GROUP BY',
+      name: 'Multiple columns GROUP BY',
       input: [{ rule: { column: 'name' } }, { rule: { column: 'age' } }],
       expected: ['GROUP BY "name", "age"', []],
     },
@@ -35,7 +35,7 @@ describe('groupUnit', () => {
       expected: ['GROUP BY SUBSTR(name, 1, 1)', []],
     },
     {
-      name: 'Raw SQL GROUP BY带绑定值',
+      name: 'Raw SQL GROUP BY with bindings',
       input: [
         {
           raw: {
@@ -55,12 +55,12 @@ describe('groupUnit', () => {
     })
   })
 
-  test('错误处理 - 绑定值数量不匹配', () => {
+  test('Error handling - Binding count mismatch', () => {
     const input: GroupByClause[] = [
       {
         raw: {
           sql: 'SUBSTR(name, 1, ?)',
-          bindings: [1, 2], // 提供了两个绑定值，但SQL中只有一个占位符
+          bindings: [1, 2], // Two bindings provided but SQL has only one placeholder
         },
       },
     ]

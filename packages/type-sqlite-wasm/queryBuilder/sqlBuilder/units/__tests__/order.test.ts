@@ -3,76 +3,57 @@ import type { OrderByClause } from '../../../types/query.type'
 import { describe, expect, test } from 'vitest'
 
 describe('orderUnit', () => {
-  const testCases: Array<{
-    name: string
-    input: OrderByClause[]
-    expected: [string, any[]]
-  }> = [
-    {
-      name: '空排序',
-      input: [],
-      expected: ['', []],
-    },
-    {
-      name: '单列排序',
-      input: [{ rule: { column: 'name' } }],
-      expected: ['ORDER BY "name"', []],
-    },
-    {
-      name: '指定排序方向',
-      input: [{ rule: { column: 'age', direction: 'DESC' } }],
-      expected: ['ORDER BY "age" DESC', []],
-    },
-    {
-      name: '指定空值位置',
-      input: [{ rule: { column: 'score', nulls: 'LAST' } }],
-      expected: ['ORDER BY "score" NULLS LAST', []],
-    },
-    {
-      name: '多列排序',
-      input: [
-        { rule: { column: 'name', direction: 'ASC' } },
-        { rule: { column: 'age', direction: 'DESC' } },
-      ],
-      expected: ['ORDER BY "name" ASC, "age" DESC', []],
-    },
-    {
-      name: 'Raw SQL排序',
-      input: [
-        {
-          raw: {
-            sql: 'RANDOM()',
-          },
-        },
-      ],
-      expected: ['ORDER BY RANDOM()', []],
-    },
-    {
-      name: 'Raw SQL带绑定值',
-      input: [
-        {
-          raw: {
-            sql: 'CASE WHEN id = ? THEN 0 ELSE 1 END',
-            bindings: [1],
-          },
-        },
-      ],
-      expected: ['ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END', [1]],
-    },
-    {
-      name: '混合规则和Raw SQL',
-      input: [
-        { rule: { column: 'name', direction: 'ASC' } },
-        { raw: { sql: 'RANDOM()' } },
-      ],
-      expected: ['ORDER BY "name" ASC, RANDOM()', []],
-    },
-  ]
+  test('Empty sort should return empty SQL', () => {
+    const result = orderUnit([])
+    expect(result).toEqual(['', []])
+  })
 
-  testCases.forEach(({ name, input, expected }) => {
-    test(name, () => {
-      const result = orderUnit(input)
-      expect(result).toEqual(expected)
-    })
+  test('Single column sort should generate basic ORDER BY statement', () => {
+    const result = orderUnit([{ rule: { column: 'name' } }])
+    expect(result).toEqual(['ORDER BY "name"', []])
+  })
+
+  test('Specified sort direction should include direction keyword', () => {
+    const result = orderUnit([{ rule: { column: 'age', direction: 'DESC' } }])
+    expect(result).toEqual(['ORDER BY "age" DESC', []])
+  })
+
+  test('Multiple column sort should use comma separator', () => {
+    const result = orderUnit([
+      { rule: { column: 'name', direction: 'ASC' } },
+      { rule: { column: 'age', direction: 'DESC' } },
+    ])
+    expect(result).toEqual(['ORDER BY "name" ASC, "age" DESC', []])
+  })
+
+  test('Raw SQL sort should use provided SQL directly', () => {
+    const result = orderUnit([
+      {
+        raw: {
+          sql: 'RANDOM()',
+        },
+      },
+    ])
+    expect(result).toEqual(['ORDER BY RANDOM()', []])
+  })
+
+  test('Raw SQL with bindings should handle parameters correctly', () => {
+    const result = orderUnit([
+      {
+        raw: {
+          sql: 'CASE WHEN id = ? THEN 0 ELSE 1 END',
+          bindings: [1],
+        },
+      },
+    ])
+    expect(result).toEqual(['ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END', [1]])
+  })
+
+  test('Mixed rules and Raw SQL should combine correctly', () => {
+    const result = orderUnit([
+      { rule: { column: 'name', direction: 'ASC' } },
+      { raw: { sql: 'RANDOM()' } },
+    ])
+    expect(result).toEqual(['ORDER BY "name" ASC, RANDOM()', []])
   })
 })

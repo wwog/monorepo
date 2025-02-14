@@ -22,5 +22,3 @@ iq.insert('users')
     excluded: { age: 'excluded.age' },
     merge: { name: 'Updated' },
   })
-
-console.log(iq.toSQL())
