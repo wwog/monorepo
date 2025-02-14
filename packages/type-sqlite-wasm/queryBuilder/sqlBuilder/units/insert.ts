@@ -43,7 +43,6 @@ export const insertUnit = (insertClauses?: InsertClause[]): SQLWithBindings => {
     if (columns.length === 0) {
       throw new Error('No columns provided for INSERT')
     }
-
     // add quotes to column names and create table statement once
     const tableStatement = `INSERT INTO ${quotes(table)} (${columns.map(quotes).join(', ')})`
 

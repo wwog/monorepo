@@ -15,16 +15,6 @@ function validateOrderDirection(direction?: string) {
   }
 }
 
-function validateNulls(nulls?: string) {
-  if (!nulls) {
-    return
-  }
-
-  if (nulls !== 'FIRST' && nulls !== 'LAST') {
-    throw new Error('Invalid nulls value')
-  }
-}
-
 export const orderUnit = (
   orderByClauses?: OrderByClause[],
 ): SQLWithBindings => {
@@ -37,19 +27,13 @@ export const orderUnit = (
 
   orderByClauses.forEach((clause) => {
     if (clause.rule) {
-      const { column, direction, nulls } = clause.rule
+      const { column, direction } = clause.rule
       validateOrderDirection(direction)
-      validateNulls(nulls)
       let orderStr = `${quotes(column as string)}`
 
       if (direction) {
         orderStr += ` ${direction}`
       }
-
-      if (nulls) {
-        orderStr += ` NULLS ${nulls}`
-      }
-
       orders.push(orderStr)
     } else if (clause.raw) {
       orders.push(clause.raw.sql)

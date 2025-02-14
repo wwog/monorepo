@@ -8,6 +8,7 @@ import {
   BaseQuery,
   type QueryOptions,
 } from '../types/query.type'
+import { semicolon } from '../utils'
 import { FromMixin, LimitMixin, ReturningMixin, WhereMixin } from './mixin'
 
 export class DeleteQuery<T> extends BaseQuery<T> implements IDeleteQuery<T> {
@@ -114,7 +115,7 @@ export class DeleteQuery<T> extends BaseQuery<T> implements IDeleteQuery<T> {
       throw new Error('No valid SQL generated')
     }
 
-    sql += ';'
+    sql = semicolon(sql)
     return [sql, bindings]
   }
 }

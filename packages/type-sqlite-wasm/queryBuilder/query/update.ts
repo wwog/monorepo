@@ -10,6 +10,7 @@ import {
   type Column,
   type OrderByType,
 } from '../types/query.type'
+import { semicolon } from '../utils'
 import { LimitMixin, ReturningMixin, WhereMixin, OrderByMixin } from './mixin'
 
 export class UpdateQuery<T> extends BaseQuery<T> implements IUpdateQuery<T> {
@@ -127,7 +128,7 @@ export class UpdateQuery<T> extends BaseQuery<T> implements IUpdateQuery<T> {
       throw new Error('No valid SQL generated')
     }
 
-    sql += ';'
+    sql = semicolon(sql)
     return [sql, bindings]
   }
 }

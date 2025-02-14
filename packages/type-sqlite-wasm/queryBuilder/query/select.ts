@@ -10,6 +10,7 @@ import {
   type SQLWithBindings,
   BaseQuery,
 } from '../types/query.type'
+import { semicolon } from '../utils'
 import {
   FromMixin,
   GroupByMixin,
@@ -138,7 +139,7 @@ export class SelectQuery<T> extends BaseQuery<T> implements ISelectQuery<T> {
     if (sql === '') {
       throw new Error('No valid SQL generated')
     }
-    sql += ';'
+    sql = semicolon(sql)
     return [sql, bindings]
   }
 }

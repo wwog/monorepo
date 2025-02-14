@@ -8,7 +8,7 @@ import {
   type NoRowIdColumn,
   type DoUpdateExcludeValues,
 } from '../types/query.type'
-import { equalStr, spaceLeft, spaceRight } from '../utils'
+import { bracket, equalStr, semicolon, spaceLeft, spaceRight } from '../utils'
 import { ReturningMixin, WhereMixin } from './mixin'
 
 export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
@@ -70,30 +70,54 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
       throw new Error('On conflict clause already set')
     }
 
-    const allValues = {
-      ...value.excluded,
-      ...value.merge,
+    // Check for duplicate properties between excluded and merge
+    if (value.excluded && value.merge) {
+      const excludedKeys = new Set(Object.keys(value.excluded))
+      const duplicateKeys = Object.keys(value.merge).filter((key) =>
+        excludedKeys.has(key),
+      )
+      if (duplicateKeys.length > 0) {
+        throw new Error(
+          `Properties ${duplicateKeys.join(', ')} cannot be set in both excluded and merge objects`,
+        )
+      }
     }
 
     let sql = 'DO UPDATE SET'
     const bindings: Bindings = []
+    const sets: string[] = []
 
-    if (Object.keys(allValues).length === 0) {
+    // Handle excluded values
+    if (value.excluded) {
+      Object.keys(value.excluded).forEach((key) => {
+        //@ts-ignore
+        sets.push(equalStr(key, value.excluded![key]))
+      })
+    }
+
+    // Handle merge values
+    if (value.merge) {
+      Object.entries(value.merge).forEach(([key, val]) => {
+        sets.push(equalStr(key, '?'))
+        bindings.push(val as string | number)
+      })
+    }
+
+    if (sets.length === 0) {
       throw new Error('No values to update')
     }
 
-    for (const [key, value] of Object.entries(allValues)) {
-      sql += spaceLeft(equalStr(key, value as string))
-      bindings.push(value as string | number)
-    }
+    sql += spaceLeft(sets.join(', '))
 
     this._onConflictClause = sql
-    this._onConflictBindings = bindings
 
+    this._onConflictBindings = bindings
+    console.log(this._onConflictClause)
+    console.log(this._onConflictBindings)
     return this
   }
 
-  rollback(): IInsertQuery<T> {
+  rollback() {
     if (this._onConflictClause) {
       throw new Error('On conflict clause already set')
     }
@@ -101,7 +125,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     return this
   }
 
-  abort(): IInsertQuery<T> {
+  abort() {
     if (this._onConflictClause) {
       throw new Error('On conflict clause already set')
     }
@@ -109,7 +133,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     return this
   }
 
-  fail(): IInsertQuery<T> {
+  fail() {
     if (this._onConflictClause) {
       throw new Error('On conflict clause already set')
     }
@@ -117,7 +141,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     return this
   }
 
-  ignore(): IInsertQuery<T> {
+  ignore() {
     if (this._onConflictClause) {
       throw new Error('On conflict clause already set')
     }
@@ -125,7 +149,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     return this
   }
 
-  replace(): IInsertQuery<T> {
+  replace() {
     if (this._onConflictClause) {
       throw new Error('On conflict clause already set')
     }
@@ -152,7 +176,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
       throw new Error('No values to insert')
     }
 
-    let sql = 'INSERT INTO'
+    let sql = ''
     const bindings: Bindings = []
     const pushResult = (result: SQLWithBindings) => {
       const noSpaceResult = result[0].trim()
@@ -165,7 +189,6 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
         bindings.push(...result[1])
       }
     }
-    pushResult([this._tableName, []])
     pushResult(
       this.sqlBuilder.insert([
         {
@@ -176,9 +199,23 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
         },
       ]),
     )
+
     if (this._callOnConflict) {
+      pushResult(['ON CONFLICT', []])
+      if (this._onConflictColumns.length > 0) {
+        pushResult([bracket(this._onConflictColumns.join(', ')), []])
+      }
+      if (this._onConflictClause) {
+        pushResult([this._onConflictClause, this._onConflictBindings])
+      }
     }
 
+    pushResult(this.returningMixin.toSQL())
+
+    if (sql === '') {
+      throw new Error('No valid SQL generated')
+    }
+    sql = semicolon(sql)
     return [sql, bindings]
   }
 }

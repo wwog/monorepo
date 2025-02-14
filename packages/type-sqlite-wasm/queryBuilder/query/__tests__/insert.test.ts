@@ -1,74 +1,206 @@
+import { describe, expect, it } from 'vitest'
 import { InsertQuery } from '../insert'
 import { Sqlite3SQLBuilder } from '../../sqlBuilder/sqlite3'
-import { describe, expect, test } from 'vitest'
+
+interface User {
+  id: number
+  name: string
+  age: number
+  email?: string
+}
 
 describe('InsertQuery', () => {
   const createQuery = () =>
-    new InsertQuery<{
-      id: number
-      name: string
-      age: number
-      created_at: string
-    }>({
+    new InsertQuery<User>({
       sqlBuilder: Sqlite3SQLBuilder,
     })
 
-  test('基本插入', () => {
+  it('should generate basic insert query', () => {
     const query = createQuery()
-      .insert('users', { name: 'John', age: 25 })
-      .toSQL()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
 
-    expect(query[0]).toBe('INSERT INTO "users" ("age", "name") VALUES (?, ?);')
-    expect(query[1]).toEqual([25, 'John'])
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe('INSERT INTO "users" ("age", "name") VALUES (?, ?);')
+    expect(bindings).toEqual([25, 'John'])
   })
 
-  test('批量插入', () => {
+  it('should handle multiple values insert', () => {
     const query = createQuery()
-      .insert('users', [
+      .insert('users')
+      .values([
         { name: 'John', age: 25 },
         { name: 'Jane', age: 23 },
       ])
-      .toSQL()
 
-    expect(query[0]).toBe(
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
       'INSERT INTO "users" ("age", "name") VALUES (?, ?), (?, ?);',
     )
-    expect(query[1]).toEqual([25, 'John', 23, 'Jane'])
+    expect(bindings).toEqual([25, 'John', 23, 'Jane'])
   })
 
-  test('带返回值的插入', () => {
+  it('should handle ON CONFLICT DO NOTHING', () => {
     const query = createQuery()
-      .insert('users', { name: 'John', age: 25 })
-      .returning(['id', 'created_at'])
-      .toSQL()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict('id')
+      .doNothing()
 
-    expect(query[0]).toBe(
-      'INSERT INTO "users" ("age", "name") VALUES (?, ?) RETURNING "id", "created_at";',
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT (id) DO NOTHING;',
     )
-    expect(query[1]).toEqual([25, 'John'])
+    expect(bindings).toEqual([25, 'John'])
   })
 
-  test('Raw SQL插入', () => {
+  it('should handle ON CONFLICT DO UPDATE', () => {
     const query = createQuery()
-      .insertRaw('INSERT INTO users (name, age) VALUES (?, ?)', ['John', 25])
-      .toSQL()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict('id')
+      .doUpdate({
+        excluded: { age: 'excluded.age' },
+        merge: { name: 'Updated' },
+      })
 
-    expect(query[0]).toBe('INSERT INTO users (name, age) VALUES (?, ?);')
-    expect(query[1]).toEqual(['John', 25])
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET age = excluded.age, name = ?;',
+    )
+    expect(bindings).toEqual([25, 'John', 'Updated'])
   })
 
-  test('错误处理 - 无INSERT子句', () => {
+  it('should handle RETURNING clause', () => {
     const query = createQuery()
-    expect(() => query.toSQL()).toThrow('No INSERT clause provided')
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .returning(['id', 'name'])
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) RETURNING "id", "name";',
+    )
+    expect(bindings).toEqual([25, 'John'])
   })
 
-  test('错误处理 - 多个INSERT子句', () => {
+  it('should throw error when table name is empty', () => {
     const query = createQuery()
-    expect(() =>
-      query
-        .insert('users', { name: 'John' })
-        .insert('users', { name: 'Jane' })
-        .toSQL(),
-    ).toThrow('Multiple INSERT clauses are not supported')
+    expect(() => query.insert('')).toThrow('Table name is required')
+  })
+
+  it('should throw error when no values provided', () => {
+    const query = createQuery().insert('users')
+    expect(() => query.toSQL()).toThrow('No values to insert')
+  })
+
+  it('should throw error when setting multiple conflict clauses', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict('id')
+      .doNothing()
+
+    expect(() => query.doUpdate({ merge: { age: 30 } })).toThrow(
+      'On conflict clause already set',
+    )
+  })
+
+  it('should handle raw returning clause', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .returningRaw('count(*) as total')
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) RETURNING count(*) as total;',
+    )
+    expect(bindings).toEqual([25, 'John'])
+  })
+
+  it('should handle multiple conflict columns', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict('id')
+      .onConflict('email')
+      .doNothing()
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT (id, email) DO NOTHING;',
+    )
+    expect(bindings).toEqual([25, 'John'])
+  })
+
+  it('should handle ROLLBACK conflict resolution', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict()
+      .rollback()
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT ROLLBACK;',
+    )
+    expect(bindings).toEqual([25, 'John'])
+  })
+
+  it('should handle ABORT conflict resolution', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict()
+      .abort()
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT ABORT;',
+    )
+    expect(bindings).toEqual([25, 'John'])
+  })
+
+  it('should handle FAIL conflict resolution', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict()
+      .fail()
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT FAIL;',
+    )
+    expect(bindings).toEqual([25, 'John'])
+  })
+
+  it('should handle IGNORE conflict resolution', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict()
+      .ignore()
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT IGNORE;',
+    )
+    expect(bindings).toEqual([25, 'John'])
+  })
+
+  it('should handle REPLACE conflict resolution', () => {
+    const query = createQuery()
+      .insert('users')
+      .values({ name: 'John', age: 25 })
+      .onConflict()
+      .replace()
+
+    const [sql, bindings] = query.toSQL()
+    expect(sql).toBe(
+      'INSERT INTO "users" ("age", "name") VALUES (?, ?) ON CONFLICT REPLACE;',
+    )
+    expect(bindings).toEqual([25, 'John'])
   })
 })

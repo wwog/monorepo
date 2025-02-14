@@ -4,6 +4,11 @@ import type {
   WhereConditionDescription,
 } from './types/query.type'
 
+//分号
+export function semicolon(str: string): string {
+  return `${str};`
+}
+
 export function equalStr(a: string, b: string): string {
   return `${a} = ${b}`
 }
