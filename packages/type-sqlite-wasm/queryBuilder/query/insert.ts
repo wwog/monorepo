@@ -36,7 +36,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     return this
   }
 
-  values(data: Partial<T> | Partial<T>[]): this {
+  values(data: T | T[]): this {
     if (Array.isArray(data)) {
       this._values.push(...data)
     } else {
