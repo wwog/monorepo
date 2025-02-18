@@ -165,7 +165,7 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
     return this
   }
 
-  toSQL(): SQLWithBindings {
+  toSQL(): SQLWithBindings[] {
     if (!this._tableName) {
       throw new Error('Table name is required')
     }
@@ -174,46 +174,51 @@ export class InsertQuery<T> extends BaseQuery<T> implements IInsertQuery<T> {
       throw new Error('No values to insert')
     }
 
-    let sql = ''
-    const bindings: Bindings = []
-    const pushResult = (result: SQLWithBindings) => {
-      const noSpaceResult = result[0].trim()
+    const results: SQLWithBindings[] = []
 
-      if (noSpaceResult !== '') {
-        if (sql !== '') {
-          sql = spaceRight(sql)
-        }
-        sql += noSpaceResult
-        bindings.push(...result[1])
-      }
-    }
-    pushResult(
-      this.sqlBuilder.insert([
-        {
-          rule: {
-            table: this._tableName,
-            values: this._values,
-          },
+    const inserts = this.sqlBuilder.insert([
+      {
+        rule: {
+          table: this._tableName,
+          values: this._values,
         },
-      ]),
-    )
+      },
+    ])
 
-    if (this._callOnConflict) {
-      pushResult(['ON CONFLICT', []])
-      if (this._onConflictColumns.length > 0) {
-        pushResult([bracket(this._onConflictColumns.join(', ')), []])
+    inserts.forEach((insert) => {
+      let sql = insert[0]
+      const bindings = insert[1]
+      const pushResult = (result: SQLWithBindings) => {
+        const noSpaceResult = result[0].trim()
+        if (noSpaceResult !== '') {
+          if (sql !== '') {
+            sql = spaceRight(sql)
+          }
+          sql += noSpaceResult
+          bindings.push(...result[1])
+        }
       }
-      if (this._onConflictClause) {
-        pushResult([this._onConflictClause, this._onConflictBindings])
+
+      if (this._callOnConflict) {
+        pushResult(['ON CONFLICT', []])
+        if (this._onConflictColumns.length > 0) {
+          pushResult([bracket(this._onConflictColumns.join(', ')), []])
+        }
+        if (this._onConflictClause) {
+          pushResult([this._onConflictClause, this._onConflictBindings])
+        }
       }
-    }
 
-    pushResult(this.returningMixin.toSQL())
+      pushResult(this.returningMixin.toSQL())
 
-    if (sql === '') {
-      throw new Error('No valid SQL generated')
-    }
-    sql = semicolon(sql)
-    return [sql, bindings]
+      if (sql === '') {
+        throw new Error('No valid SQL generated')
+      }
+
+      sql = semicolon(sql)
+      results.push([sql, bindings])
+    })
+
+    return results
   }
 }
