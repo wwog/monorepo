@@ -75,7 +75,7 @@ export const insertUnit = (
             `(${columns
               .map((col) => {
                 const value = obj[col]
-                if (value !== null || value !== undefined) {
+                if (value !== null && value !== undefined) {
                   if (typeof value === 'string') {
                     bindings.push(value)
                     return '?'
