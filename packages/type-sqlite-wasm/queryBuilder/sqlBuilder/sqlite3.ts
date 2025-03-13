@@ -46,7 +46,7 @@ export const Sqlite3SQLBuilder: SQLBuilder = {
   returning: (clauses?: ReturningClause[]): SQLWithBindings => {
     return returningUnit(clauses)
   },
-  insert: (clauses: InsertClause[]): SQLWithBindings => {
+  insert: (clauses: InsertClause[]): SQLWithBindings[] => {
     return insertUnit(clauses)
   },
   update: (clauses: UpdateClause[]): SQLWithBindings => {

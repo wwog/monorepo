@@ -213,9 +213,10 @@ const optimizeSet = (
 
       case '$null':
         // if there is already IS NULL condition, don't add it again
-        if (target['$null_AND'] || target['$null_OR']) {
+        if (target['$null_AND']?.length || target['$null_OR']?.length) {
           return
         }
+
         break
 
       case '$like':
@@ -257,7 +258,6 @@ const optimizeSet = (
 const preprocess = (whereClauses: WhereClause[]): PreprocessResult => {
   const parts = new Map<string, PartItem>()
   const rawParts: WhereRaw[] = []
-
   whereClauses.forEach((whereClause) => {
     const { rule, raw } = whereClause
     if (raw) {
@@ -311,9 +311,9 @@ const preprocess = (whereClauses: WhereClause[]): PreprocessResult => {
 
 const convertToSQL = (optimizeResult: PreprocessResult): SQLWithBindings => {
   const { conditionParts, rawParts } = optimizeResult
+  console.log(optimizeResult.conditionParts)
   const conditions: Array<{ sql: string; bindings: any[] }> = []
   const orConditions: Array<{ sql: string; bindings: any[] }> = []
-
   // 验证条件数量
   if (conditionParts.size > MAX_IN_VALUES) {
     throw new Error(
