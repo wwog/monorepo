@@ -102,7 +102,7 @@ const optimizeSet = (
     switch (key) {
       case '$eq':
         // Check if there's existing IN condition
-        if (target['$in_OR']) {
+        if (target['$in_OR']?.length) {
           target['$in_OR'].push(sourceValue)
           return
         }
@@ -198,7 +198,7 @@ const optimizeSet = (
         break
 
       case '$between':
-        if (target['$between_OR']) {
+        if (target['$between_OR']?.length) {
           // merge between conditions
           const existing = target['$between_OR'][0]
           target['$between_OR'] = [
