@@ -191,7 +191,7 @@ const optimizeSet = (
             `IN condition for column "${column}" must be an array`,
           )
         }
-        if (target['$in_OR']) {
+        if (target['$in_OR']?.length) {
           target['$in_OR'] = [...new Set([...target['$in_OR'], ...sourceValue])]
           return
         }
